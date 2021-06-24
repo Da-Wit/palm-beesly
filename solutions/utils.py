@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import os
 import mediapipe as mp
+import calculator
 
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
@@ -66,7 +67,6 @@ def remove_bground(image):
     # 가장 큰 영역 찾기
 
     maxcnt = get_max_contour(contours)
-    Print(maxcnt)
     mask = np.zeros(thresh.shape).astype(thresh.dtype)
 
     # 경계선 내부 255로
@@ -83,8 +83,124 @@ def get_hand_form(image):
 
             # Convert the BGR image to RGB before processing.
             results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-            print("results:",results.multi_handedness)
+            # print("results:",results.multi_handedness)
 
             if not results.multi_hand_landmarks:
               return None
             return results.multi_hand_landmarks[0].landmark
+
+# test codes
+
+# 숫자가 크면 클수록 pip와 mcp 사이의 간격이 커집니다.
+# 소수도 가능하고, 에러가 나면 이 수를 키우거나 줄이면 됩니다.
+EXTREME_CUTTING_RATIO = 6
+
+def get_intersection(image,coord1,coord2):
+    X, Y = 0, 1
+    binary_image = adaptive_threshold(image)
+
+    # y1 is bigger than y2
+    y1, y2, x1, x2 = 0, 0, 0, 0
+    if(coord2[Y] > coord1[Y]):
+        y1, x1 = coord2[Y], coord2[X]
+        y2, x2 = coord1[Y], coord1[X]
+    else:
+        y1, x1 = coord1[Y], coord1[X]
+        y2, x2 = coord2[Y], coord2[X]
+    return calculator.get_intersection(binary_image, x1, y1, x2, y2)
+
+
+
+def init_finger_coords(pip_coords,mcp_coords,width,height):
+    copied_pip = pip_coords.copy()
+    copied_mcp = mcp_coords.copy()
+    for i in range(len(pip_coords)):
+        X, Y = 0, 1
+
+        pip_y, pip_x = copied_pip[i][Y], copied_pip[i][X]
+        mcp_y, mcp_x = copied_mcp[i][Y], copied_mcp[i][X]
+
+        copied_pip[i] = (
+         int((pip_x + ((mcp_x - pip_x) / EXTREME_CUTTING_RATIO)) * width),
+         int((pip_y + ((mcp_y - pip_y) / EXTREME_CUTTING_RATIO)) * height),
+        )
+
+        copied_mcp[i] = (
+         int((mcp_x + ((pip_x - mcp_x) / EXTREME_CUTTING_RATIO)) * width),
+         int((mcp_y + ((pip_y - mcp_y) / EXTREME_CUTTING_RATIO)) * height),
+         )
+    copied_pip = np.array(copied_pip,dtype=np.int32)
+    copied_mcp = np.array(copied_mcp,dtype=np.int32)
+    return (copied_pip,copied_mcp)
+
+image = cv2.imread("C:/Users/USER/workspace/palm/images/sample2.png")
+image = resize(image,height=650)
+landmark = get_hand_form(image)
+img = image.copy()
+# img = cv2.flip(image, 1)
+image_height, image_width, _ = img.shape
+
+
+wrist_coord = (
+          int(landmark[mp_hands.HandLandmark.WRIST].x * image_width),
+          int(landmark[mp_hands.HandLandmark.WRIST].y * image_height),
+            )
+pip_coords = np.array(
+                      [
+                       (
+                        landmark[mp_hands.HandLandmark.PINKY_PIP].x,
+                        landmark[mp_hands.HandLandmark.PINKY_PIP].y,
+                        ),
+                       (
+                        landmark[mp_hands.HandLandmark.RING_FINGER_PIP].x,
+                        landmark[mp_hands.HandLandmark.RING_FINGER_PIP].y,
+                        ),
+                       (
+                        landmark[mp_hands.HandLandmark.MIDDLE_FINGER_PIP].x,
+                        landmark[mp_hands.HandLandmark.MIDDLE_FINGER_PIP].y,
+                        ),
+                       (
+                        landmark[mp_hands.HandLandmark.INDEX_FINGER_PIP].x,
+                        landmark[mp_hands.HandLandmark.INDEX_FINGER_PIP].y,
+                        )
+                      ]
+                      ,np.float64
+                      )
+mcp_coords = np.array(
+                    [
+                     (
+                      landmark[mp_hands.HandLandmark.PINKY_MCP].x,
+                      landmark[mp_hands.HandLandmark.PINKY_MCP].y,
+                      ),
+                     (
+                      landmark[mp_hands.HandLandmark.RING_FINGER_MCP].x,
+                      landmark[mp_hands.HandLandmark.RING_FINGER_MCP].y,
+                      ),
+                     (
+                      landmark[mp_hands.HandLandmark.MIDDLE_FINGER_MCP].x,
+                      landmark[mp_hands.HandLandmark.MIDDLE_FINGER_MCP].y,
+                      ),
+                     (
+                      landmark[mp_hands.HandLandmark.INDEX_FINGER_MCP].x,
+                      landmark[mp_hands.HandLandmark.INDEX_FINGER_MCP].y,
+                      )
+                    ]
+                    ,np.float64
+                    )
+pip_coords, mcp_coords = init_finger_coords(pip_coords,mcp_coords,image_width,image_height)
+
+length = len(pip_coords)
+
+intersections = np.empty((length+1,2),dtype=np.int32)
+
+intersections[0] = wrist_coord
+
+for i in range(len(pip_coords)):
+    intersections[i+1] = get_intersection(img,pip_coords[i],mcp_coords[i])
+    # cv2.circle(img,intersections[i+1],1,(255,0,0),2)
+# for i in range(len(pip_coords)):
+#     cv2.circle(img,mcp_coords[i],1,(255,0,0),2)
+
+# cv2.circle(img,wrist_coord,10,(255,0,255),3)
+cv2.imshow("img",img)
+cv2.waitKey(0)
