@@ -5,6 +5,9 @@ import utils
 import calculator
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
+
+# 숫자가 크면 클수록 pip와 mcp 사이의 간격이 커집니다.
+# 소수도 가능하고, 에러가 나면 이 수를 키우거나 줄이면 됩니다.
 EXTREME_CUTTING_RATIO = 6
 
 WRIST = 0
@@ -30,20 +33,6 @@ PINKY_DIP = 19
 PINKY_TIP = 20
 
 
-def get_intersection(image,coord1,coord2):
-    X, Y = 0, 1
-    binary_image = utils.adaptive_threshold(image)
-
-    # y1 is bigger than y2
-    y1, y2, x1, x2 = 0, 0, 0, 0
-    if(coord2[Y] > coord1[Y]):
-        y1, x1 = coord2[Y], coord2[X]
-        y2, x2 = coord1[Y], coord1[X]
-    else:
-        y1, x1 = coord1[Y], coord1[X]
-        y2, x2 = coord2[Y], coord2[X]
-    return calculator.get_intersection(binary_image, x1, y1, x2, y2)
-
 def init_finger_coords(pip_coords,mcp_coords,width,height):
     copied_pip = pip_coords.copy()
     copied_mcp = mcp_coords.copy()
@@ -67,24 +56,11 @@ def init_finger_coords(pip_coords,mcp_coords,width,height):
     return (copied_pip,copied_mcp)
 
 
-def get_finger_coords(image,pip_coords,mcp_coords):
-    length = len(pip_coords)
-
-    result_finger_coords = np.empty((length,2),dtype=np.int32)
-    for i in range(length):
-        # TODO: error handling when there's no any intersection
-        # coordinate between coordinate of pip and mcp in a finger
-
-        intersection_y,intersection_x = get_intersection(image,pip_coords[i], mcp_coords[i])
-        result_finger_coords[i] = (intersection_y,intersection_x)
-    return result_finger_coords
-
-
 def get_palm(image):
     landmark = utils.get_hand_form(image)
     if not landmark:
       return None
-    # img = cv2.flip(image, 1)
+
     img = image.copy()
     image_height, image_width, _ = img.shape
 
@@ -93,8 +69,8 @@ def get_palm(image):
               int(landmark[mp_hands.HandLandmark.WRIST].y * image_height)
                 )
 
-        # fingers are ordered by pinky, ring, middle, index
-        # In finger, pip is the fourth joint and mcp is the third one.
+    # fingers are ordered by pinky, ring, middle, index
+    # In finger, pip is the fourth joint and mcp is the third one.
     pip_coords = np.array(
                           [
                            (
@@ -142,35 +118,18 @@ def get_palm(image):
     palm_coords = np.empty((length_of_palm_coods,2),dtype=np.int32)
     palm_coords[0] = wrist_coord
 
-
     pip_coords, mcp_coords = init_finger_coords(pip_coords,mcp_coords,image_width,image_height)
 
 
-    # finger_coords = get_finger_coords(image,pip_coords,mcp_coords)
-
     for i in range(len(pip_coords)):
-        palm_coords[i+1] = get_intersection(img,pip_coords[i],mcp_coords[i])
+        palm_coords[i+1] = utils.get_intersection(img,pip_coords[i],mcp_coords[i])
 
 
-    # ret,thresh = utils.threshold(img)
-    # mask = np.zeros(thresh.shape).astype(thresh.dtype)
-    #
-    # cv2.fillPoly(mask, [palm_coords], [255, 255, 255])
-    # # cv2.imshow("mask",mask)
-    #
-    # # return cv2.bitwise_and(image,image,mask = mask)
-    # img = cv2.bitwise_and(img,img,mask = mask)
+    ret,thresh = utils.threshold(img)
+    mask = np.zeros(thresh.shape).astype(thresh.dtype)
+    cv2.fillPoly(mask, [palm_coords], [255, 255, 255])
+    img = cv2.bitwise_and(img,img,mask = mask)
 
-    img = cv2.polylines(img, [palm_coords],
-                      True, (255,0,0), 3)
-    # for pip in pip_coords:
-    #     cv2.circle(img,pip,2,(255,0,0),2)
-    #
-    # for pip in mcp_coords:
-    #     cv2.circle(img,pip,2,(255,0,0),2)
-    #
-    # for coord in palm_coords:
-    #     cv2.circle(img,coord,5,(0,0,255),2)
     return img
 
 
