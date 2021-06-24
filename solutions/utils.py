@@ -82,7 +82,8 @@ def get_hand_form(image):
             img = cv2.flip(image, 1)
 
             # Convert the BGR image to RGB before processing.
-            results = hands.process(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+            results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+            print("results:",results.multi_handedness)
 
             if not results.multi_hand_landmarks:
               return None

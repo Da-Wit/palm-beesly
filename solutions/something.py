@@ -33,7 +33,6 @@ PINKY_TIP = 20
 def get_intersection(image,coord1,coord2):
     X, Y = 0, 1
     binary_image = utils.adaptive_threshold(image)
-    print("i caught in a trap")
 
     # y1 is bigger than y2
     y1, y2, x1, x2 = 0, 0, 0, 0
@@ -43,128 +42,152 @@ def get_intersection(image,coord1,coord2):
     else:
         y1, x1 = coord1[Y], coord1[X]
         y2, x2 = coord2[Y], coord2[X]
-    print(calculator.get_intersection)
     return calculator.get_intersection(binary_image, x1, y1, x2, y2)
 
-def init_palm(coords_for_line,width,height):
-    for index in range(len(coords_for_line)):
-        PIP = 0
-        MCP = 1
+def init_finger_coords(pip_coords,mcp_coords,width,height):
+    copied_pip = pip_coords.copy()
+    copied_mcp = mcp_coords.copy()
+    for i in range(len(pip_coords)):
         X, Y = 0, 1
 
-        pip_y, pip_x = coords_for_line[index][PIP][Y], coords_for_line[index][PIP][X]
-        mcp_y, mcp_x = coords_for_line[index][MCP][Y], coords_for_line[index][MCP][X]
-        coords_for_line[index] = [
-                                  (
-                                   int((pip_x + (mcp_x - pip_x) / EXTREME_CUTTING_RATIO) * width),
-                                   int((pip_y + (mcp_y - pip_y) / EXTREME_CUTTING_RATIO) * height),
-                                  ),
-                                  (
-                                   int((mcp_x + (pip_x - mcp_x) / EXTREME_CUTTING_RATIO) * width),
-                                   int((mcp_y + (pip_y - mcp_y) / EXTREME_CUTTING_RATIO) * height),
-                                   )
-                                  ]
+        pip_y, pip_x = copied_pip[i][Y], copied_pip[i][X]
+        mcp_y, mcp_x = copied_mcp[i][Y], copied_mcp[i][X]
 
-def calculate_intersection_coordinate(image,intersection_coords,coords_for_line):
-    print("in my life")
-    result_intersection_coords = intersection_coords.copy()
-    for coords in coords_for_line:
-        print("i lv more")
+        copied_pip[i] = (
+         int((pip_x + ((mcp_x - pip_x) / EXTREME_CUTTING_RATIO)) * width),
+         int((pip_y + ((mcp_y - pip_y) / EXTREME_CUTTING_RATIO)) * height),
+        )
 
-        PIP, MCP = 0, 1
-        # if(intersection_coord == None):
-        # #     # error handling
-        intersection_y,intersection_x = get_intersection(image,coords[PIP], coords[MCP])
-        print(intersection_y,intersection_x)
-        result_intersection_coords = np.concatenate((intersection_coords,np.array([[intersection_x,intersection_y]])))
-    print("the lv u make is equal to the love")
-    return result_intersection_coords
+        copied_mcp[i] = (
+         int((mcp_x + ((pip_x - mcp_x) / EXTREME_CUTTING_RATIO)) * width),
+         int((mcp_y + ((pip_y - mcp_y) / EXTREME_CUTTING_RATIO)) * height),
+         )
+    copied_pip = np.array(copied_pip,dtype=np.int32)
+    copied_mcp = np.array(copied_mcp,dtype=np.int32)
+    return (copied_pip,copied_mcp)
 
 
-def get_palm_coordinate(image):
-    print("welcome to get_palm_coordinate")
+def get_finger_coords(image,pip_coords,mcp_coords):
+    length = len(pip_coords)
+
+    result_finger_coords = np.empty((length,2),dtype=np.int32)
+    for i in range(length):
+        # TODO: error handling when there's no any intersection
+        # coordinate between coordinate of pip and mcp in a finger
+
+        intersection_y,intersection_x = get_intersection(image,pip_coords[i], mcp_coords[i])
+        result_finger_coords[i] = (intersection_y,intersection_x)
+    return result_finger_coords
+
+
+def get_palm(image):
     landmark = utils.get_hand_form(image)
-    print("got landmark")
-
     if not landmark:
       return None
-    print("error checekd")
+    img = cv2.flip(image, 1)
+    image_height, image_width, _ = img.shape
 
-    image_height, image_width, _ = image.shape
-    print("got width, height")
+    wrist_coord = (
+              int(landmark[mp_hands.HandLandmark.WRIST].x * image_width),
+              int(landmark[mp_hands.HandLandmark.WRIST].y * image_height)
+                )
 
-    WRIST = [[
-              landmark[mp_hands.HandLandmark.WRIST].x * image_width,
-              landmark[mp_hands.HandLandmark.WRIST].y * image_height
-            ]]
-    print("defined WRIST")
+        # fingers are ordered by pinky, ring, middle, index
+        # In finger, pip is the fourth joint and mcp is the third one.
+    pip_coords = np.array(
+                          [
+                           (
+                            landmark[mp_hands.HandLandmark.PINKY_PIP].x,
+                            landmark[mp_hands.HandLandmark.PINKY_PIP].y,
+                            ),
+                           (
+                            landmark[mp_hands.HandLandmark.RING_FINGER_PIP].x,
+                            landmark[mp_hands.HandLandmark.RING_FINGER_PIP].y,
+                            ),
+                           (
+                            landmark[mp_hands.HandLandmark.MIDDLE_FINGER_PIP].x,
+                            landmark[mp_hands.HandLandmark.MIDDLE_FINGER_PIP].y,
+                            ),
+                           (
+                            landmark[mp_hands.HandLandmark.INDEX_FINGER_PIP].x,
+                            landmark[mp_hands.HandLandmark.INDEX_FINGER_PIP].y,
+                            )
+                          ]
+                          ,np.float64
+                          )
+    mcp_coords = np.array(
+                        [
+                         (
+                          landmark[mp_hands.HandLandmark.PINKY_MCP].x,
+                          landmark[mp_hands.HandLandmark.PINKY_MCP].y,
+                          ),
+                         (
+                          landmark[mp_hands.HandLandmark.RING_FINGER_MCP].x,
+                          landmark[mp_hands.HandLandmark.RING_FINGER_MCP].y,
+                          ),
+                         (
+                          landmark[mp_hands.HandLandmark.MIDDLE_FINGER_MCP].x,
+                          landmark[mp_hands.HandLandmark.MIDDLE_FINGER_MCP].y,
+                          ),
+                         (
+                          landmark[mp_hands.HandLandmark.INDEX_FINGER_MCP].x,
+                          landmark[mp_hands.HandLandmark.INDEX_FINGER_MCP].y,
+                          )
+                        ]
+                        ,np.float64
+                        )
 
-    intersection_coords = np.array(WRIST,np.int32)
-    print("defined ic")
-
-    coords_for_line = [
-                     [
-                      (
-                       landmark[mp_hands.HandLandmark.PINKY_PIP].x,
-                       landmark[mp_hands.HandLandmark.PINKY_PIP].y,
-                       ),
-                      (
-                        landmark[mp_hands.HandLandmark.PINKY_MCP].x,
-                        landmark[mp_hands.HandLandmark.PINKY_MCP].y,
-                        ),
-                      ],
-                     [
-                      (
-                       landmark[mp_hands.HandLandmark.RING_FINGER_PIP].x,
-                       landmark[mp_hands.HandLandmark.RING_FINGER_PIP].y,
-                       ),
-                      (
-                        landmark[mp_hands.HandLandmark.RING_FINGER_MCP].x,
-                        landmark[mp_hands.HandLandmark.RING_FINGER_MCP].y,
-                        ),
-                      ],
-                     [
-                      (
-                       landmark[mp_hands.HandLandmark.MIDDLE_FINGER_PIP].x,
-                       landmark[mp_hands.HandLandmark.MIDDLE_FINGER_PIP].y,
-                       ),
-                      (
-                        landmark[mp_hands.HandLandmark.MIDDLE_FINGER_MCP].x,
-                        landmark[mp_hands.HandLandmark.MIDDLE_FINGER_MCP].y,
-                        ),
-                      ],
-                     [
-                      (
-                       landmark[mp_hands.HandLandmark.INDEX_FINGER_PIP].x,
-                       landmark[mp_hands.HandLandmark.INDEX_FINGER_PIP].y,
-                       ),
-                      (
-                        landmark[mp_hands.HandLandmark.INDEX_FINGER_MCP].x,
-                        landmark[mp_hands.HandLandmark.INDEX_FINGER_MCP].y,
-                        ),
-                      ],
-        ]
-    print("defined cfl")
-
-    init_palm(coords_for_line,image_width,image_height)
-    print("init")
-
-    # process values
-    intersection_coords = calculate_intersection_coordinate(image,intersection_coords,coords_for_line)
-    print("calculated")
+    palm_coords = np.empty((1,2),dtype=np.int32)
+    palm_coords[0] = wrist_coord
 
 
-    ret,thresh = utils.threshold(image)
-    print("threshold")
+    pip_coords, mcp_coords = init_finger_coords(pip_coords,mcp_coords,image_width,image_height)
 
-    mask = np.zeros(thresh.shape).astype(thresh.dtype)
-    print("mask")
 
-    cv2.fillPoly(mask, [intersection_coords], [255, 255, 255])
-    print("fillpoly")
+    finger_coords = get_finger_coords(image,pip_coords,mcp_coords)
 
-    print("done!")
-    return cv2.bitwise_and(image,image,mask = mask)
+    palm_coords = np.concatenate((palm_coords,finger_coords),axis=0)
+
+    # ret,thresh = utils.threshold(img)
+    # mask = np.zeros(thresh.shape).astype(thresh.dtype)
+    #
+    # cv2.fillPoly(mask, [palm_coords], [255, 255, 255])
+    # cv2.imshow("mask",mask)
+
+    # return cv2.bitwise_and(image,image,mask = mask)
+    # img = cv2.bitwise_and(img,img,mask = mask)
+    for pip in pip_coords:
+        cv2.circle(img,pip,2,(255,0,0),2)
+
+    for pip in mcp_coords:
+        cv2.circle(img,pip,2,(255,0,0),2)
+
+    for coord in palm_coords:
+        cv2.circle(img,coord,5,(0,0,255),2)
+    return cv2.flip(img,1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#######################    legacy codes below    #######################
+
+
+
+
+
+
+
 
 
 

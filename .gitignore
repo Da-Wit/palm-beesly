@@ -1,4 +1,4 @@
-images
-.vs
-.git
-.results
+images/
+.vs/
+.git/
+results/
