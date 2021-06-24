@@ -9,6 +9,7 @@ mp_hands = mp.solutions.hands
 # 숫자가 크면 클수록 pip와 mcp 사이의 간격이 커집니다.
 # 소수도 가능하고, 에러가 나면 이 수를 키우거나 줄이면 됩니다.
 EXTREME_CUTTING_RATIO = 6
+EXTRA_LENGTH_EXCEPT_FINGERS = 2
 
 WRIST = 0
 THUMB_CMC = 1
@@ -68,6 +69,12 @@ def get_palm(image):
         int(landmark[mp_hands.HandLandmark.WRIST].y * image_height)
     )
 
+    thumb_coord = (
+             int((landmark[mp_hands.HandLandmark.THUMB_CMC].x + landmark[mp_hands.HandLandmark.THUMB_MCP].x) / 2 * image_width),
+             int((landmark[mp_hands.HandLandmark.THUMB_CMC].y + landmark[mp_hands.HandLandmark.THUMB_MCP].y) / 2 * image_height)
+    )
+
+
     # fingers are ordered by pinky, ring, middle, index
     # In finger, pip is the fourth joint and mcp is the third one.
     pip_coords = np.array(
@@ -111,20 +118,27 @@ def get_palm(image):
         ], np.float64
     )
 
-    length_of_palm_coods = len(pip_coords)+1
+
+    # The reason why I plus 2(EXTRA_LENGTH_EXCEPT_FINGERS) is because palm_coords
+    # Includes the coordinates of thumb and wrist
+    # Not just fingers' coordinates
+    length_of_palm_coods = len(pip_coords)+EXTRA_LENGTH_EXCEPT_FINGERS
     palm_coords = np.empty((length_of_palm_coods, 2), dtype=np.int32)
-    palm_coords[0] = wrist_coord
+    palm_coords[0] =  thumb_coord
+    palm_coords[1] = wrist_coord
 
     pip_coords, mcp_coords = init_finger_coords(
         pip_coords, mcp_coords, image_width, image_height)
 
     for i in range(len(pip_coords)):
         palm_coords[i +
-                    1] = utils.get_intersection(img, pip_coords[i], mcp_coords[i])
+                    EXTRA_LENGTH_EXCEPT_FINGERS] = utils.get_intersection(img, pip_coords[i], mcp_coords[i])
 
     ret, thresh = utils.threshold(img)
     mask = np.zeros(thresh.shape).astype(thresh.dtype)
     cv2.fillPoly(mask, [palm_coords], [255, 255, 255])
     img = cv2.bitwise_and(img, img, mask=mask)
+
+    # print("palm_coords",)
 
     return img
