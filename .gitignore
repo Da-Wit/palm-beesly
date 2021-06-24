@@ -1,4 +1,5 @@
-images/
-.vs/
-.git/
-results/
+/images
+/.vs
+/.git
+/results
+/solutions/__pycache__
