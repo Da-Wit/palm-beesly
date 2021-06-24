@@ -10,8 +10,6 @@ image = utils.resize(image,height=600)
 
 cv2.imshow("originalss.png",image)
 image = something.get_palm(image)
-
-cv2.imwrite("test.png",image)
 cv2.imshow("palm_only1.png",image)
 
 cv2.waitKey(0)

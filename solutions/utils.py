@@ -1,14 +1,6 @@
 import cv2
 import numpy as np
-import os
-import mediapipe as mp
 import calculator
-
-mp_drawing = mp.solutions.drawing_utils
-mp_hands = mp.solutions.hands
-
-resultDirectory = 'C:/Users/USER/workspace/palm/results'
-imageDirectory = 'C:/Users/USER/workspace/palm/images/sample2.png'
 
 def resize(image, width=None, height=None, inter=cv2.INTER_AREA):
     dim = None
@@ -50,6 +42,10 @@ def threshold(image):
     return ret,thresh
 
 
+# 제일 큰 contours를 구해주는 함수
+# max contour를 구하는 이유는
+# background에 손 말고 이상한 것들이 남아있는 경우가 많음
+# 그것들을 지우고 손만 남기기 위함
 def get_max_contour(contours):
     max = 0
     maxcnt = None
@@ -60,6 +56,10 @@ def get_max_contour(contours):
             maxcnt = cnt
     return maxcnt
 
+
+# 배경을 지우고 손만 남겨주는 함수
+# 배경을 검정색으로 해줌
+# 손 주위 완벽히 지워지지 않고 뭔가 남을 수 있음
 def remove_bground(image):
     ret,thresh = threshold(image)
     #경계선 찾음
@@ -73,7 +73,11 @@ def remove_bground(image):
     cv2.fillPoly(mask, [maxcnt], [255, 255, 255])
     return cv2.bitwise_and(image,image,mask = mask)
 
-def get_hand_form(image):
+
+# mediapipe 라이브러리를 써서 손에 있는 특정 부위들의
+# 좌표값을 구해주는 함수
+# 그 좌표값들을 반환함
+def get_hand_form(image, mp_hands):
     with mp_hands.Hands(
         static_image_mode=True,
         max_num_hands=1,
@@ -89,7 +93,13 @@ def get_hand_form(image):
               return None
             return results.multi_hand_landmarks[0].landmark
 
-
+# 손가락 3번째 마디 부분의 좌표값들을 지닌 배열(coord2)과
+# 3번째 마디 약간 아래의 손바닥 부분의 좌표값들을 지닌
+# 배열(coord1)을 이용해서 coord1과 coord2의 각각의
+# 좌표들로 직선을 만들어서 그 직선 안에서
+# 손가락 3번째 마디가 끝나는, 3번째 마디와
+# 손바닥 부분의 경계의 좌표를 구해서
+# 반환하는 함수
 def get_intersection(image,coord1,coord2):
     X, Y = 0, 1
     binary_image = adaptive_threshold(image)

@@ -3,7 +3,7 @@ import mediapipe as mp
 import numpy as np
 import utils
 import calculator
-mp_drawing = mp.solutions.drawing_utils
+
 mp_hands = mp.solutions.hands
 
 # 숫자가 크면 클수록 pip와 mcp 사이의 간격이 커집니다.
@@ -46,7 +46,6 @@ def init_finger_coords(pip_coords,mcp_coords,width,height):
          int((pip_x + ((mcp_x - pip_x) / EXTREME_CUTTING_RATIO)) * width),
          int((pip_y + ((mcp_y - pip_y) / EXTREME_CUTTING_RATIO)) * height),
         )
-
         copied_mcp[i] = (
          int((mcp_x + ((pip_x - mcp_x) / EXTREME_CUTTING_RATIO)) * width),
          int((mcp_y + ((pip_y - mcp_y) / EXTREME_CUTTING_RATIO)) * height),
@@ -57,7 +56,7 @@ def init_finger_coords(pip_coords,mcp_coords,width,height):
 
 
 def get_palm(image):
-    landmark = utils.get_hand_form(image)
+    landmark = utils.get_hand_form(image, mp_hands)
     if not landmark:
       return None
 
