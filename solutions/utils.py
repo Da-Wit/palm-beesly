@@ -24,7 +24,7 @@ def canny(image):
     denoised = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
     equalized = cv2.equalizeHist(denoised)
     blur = cv2.GaussianBlur(equalized, (9, 9), 0)
-    return cv2.Canny(blur, 40, 80)
+    return cv2.Canny(blur, 10, 150, apertureSize=3)
 
 
 def adaptive_threshold(image):
