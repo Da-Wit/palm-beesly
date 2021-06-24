@@ -55,7 +55,6 @@ def init_finger_coords(pip_coords, mcp_coords, width, height):
     copied_mcp = np.array(copied_mcp, dtype=np.int32)
     return (copied_pip, copied_mcp)
 
-
 def get_palm(image):
     landmark = utils.get_hand_form(image, mp_hands)
     if not landmark:

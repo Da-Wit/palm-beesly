@@ -20,11 +20,11 @@ def resize(image, width=None, height=None, inter=cv2.INTER_AREA):
 
 def canny(image):
     img = image.copy()
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    img = cv2.fastNlMeansDenoising(img, None, 10, 7, 21)
-    img = cv2.equalizeHist(img)
-    img = cv2.GaussianBlur(img, (9, 9), 0)
-    return cv2.Canny(img, 40, 80)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    denoised = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
+    equalized = cv2.equalizeHist(denoised)
+    blur = cv2.GaussianBlur(equalized, (9, 9), 0)
+    return cv2.Canny(blur, 40, 80)
 
 
 def adaptive_threshold(image):
