@@ -24,8 +24,13 @@ def canny(image):
     denoised = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
     equalized = cv2.equalizeHist(denoised)
     blur = cv2.GaussianBlur(equalized, (9, 9), 0)
-    return cv2.Canny(blur, 10, 150, apertureSize=3)
+    return cv2.Canny(blur, 10, 120, apertureSize=3)
 
+def get_distance(coord1, coord2):
+    return ((coord1[0]-coord2[0])**2 + (coord1[1]-coord2[1])**2)**(1/2)
+
+def get_degree(coord1, coord2):
+    return (coord1[1] - coord2[1])/((coord1[0] - coord2[0])+10**(-9))
 
 def adaptive_threshold(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -43,6 +48,40 @@ def threshold(image):
     blurred = cv2.blur(skinRegionHSV, (2, 2))
     ret, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY)
     return ret, thresh
+
+# coord1 is closer to cnt than coord2
+def aws(image,cnt, coord1, coord2):
+    degree = get_degree(coord1,coord2)
+    # luxk is a coordinate on a linear equation
+    # that includes both of coord1 and coord2.
+    # Distance of luxk-coord1 and
+    # distance of coord1-coord2 are same.
+    # Also, luxk is closer to coord1 than coord2.
+    luxk = np.array([2*coord1[0]-coord2[0],2*coord1[1]-coord2[1]])
+
+    if coord1[0] > luxk[0]:
+        bigger_x = coord1[0]
+        smaller_x = luxk[0]
+    else:
+        bigger_x = luxk[0]
+        smaller_x = coord1[0]
+
+    if coord1[1] > luxk[1]:
+        bigger_y = coord1[1]
+        smaller_y = luxk[1]
+    else:
+        bigger_y = luxk[1]
+        smaller_y = coord1[1]
+
+    min_degree_gap = 999999999999
+    coord_of_min_degree_gap = np.array([0,0])
+    for [[cnt_x,cnt_y]] in cnt:
+        if cnt_x <= bigger_x and cnt_x >= smaller_x and cnt_y <= bigger_y and cnt_y >= smaller_y:
+            degree_gap = abs(get_degree(np.array([cnt_x,cnt_y]),coord1) - degree)
+            if degree_gap < min_degree_gap:
+                min_degree_gap = degree_gap
+                coord_of_min_degree_gap = np.array([cnt_x,cnt_y])
+    return coord_of_min_degree_gap
 
 
 # 제일 큰 contours를 구해주는 함수
@@ -97,6 +136,52 @@ def get_hand_form(image, mp_hands):
             return None
         return results.multi_hand_landmarks[0].landmark
 
+
+# mediapipe 라이브버리 예제(https://google.github.io/mediapipe/solutions/hands.html)
+# 에서 사용된 기본 손 감지 코드
+def get_palm_original(image, mp_hands,mp_drawing):
+    with mp_hands.Hands(
+            static_image_mode=True,
+            max_num_hands=1,
+            min_detection_confidence=0.5) as hands:
+        # Flip image around y-axis for correct handedness output
+        img = cv2.flip(image, 1)
+
+        # Convert the BGR image to RGB before processing.
+        results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        if not results.multi_hand_landmarks:
+            return None
+        img = cv2.flip(img, 1)
+        for hand_landmarks in results.multi_hand_landmarks:
+              mp_drawing.draw_landmarks(
+                  img, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+        return img
+
+
+def get_contour(image):
+    ret, thresh = threshold(image)
+    contours, hierarchy = cv2.findContours(
+        thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    return get_max_contour(contours)
+
+
+def get_part_of_contour(image,contour,coord1,coord2):
+    # make iterable coords tuple to execute for loop
+    coords = (coord1,coord2)
+    indices_of_coords = np.zeros((2,3), dtype=int)
+
+    for index in range(len(coords)):
+        coord = coords[index]
+
+        # indices having same value with coord
+        ihsvwc = np.asarray(np.where(contour == coord)).T
+        for i in ihsvwc:
+            if coord[0] == contour[i[0]][i[1]][0] and coord[1] == contour[i[0]][i[1]][1]:
+                indices_of_coords[index] = i
+    part_of_contour = contour[indices_of_coords[0][0]:indices_of_coords[1][0]+1]
+    return part_of_contour
+
+
 # 손가락 3번째 마디 부분의 좌표값들을 지닌 배열(coord2)과
 # 3번째 마디 약간 아래의 손바닥 부분의 좌표값들을 지닌
 # 배열(coord1)을 이용해서 coord1과 coord2의 각각의
@@ -104,9 +189,7 @@ def get_hand_form(image, mp_hands):
 # 손가락 3번째 마디가 끝나는, 3번째 마디와
 # 손바닥 부분의 경계의 좌표를 구해서
 # 반환하는 함수
-
-
-def get_intersection(image, coord1, coord2):
+def get_finger_intersection(image, coord1, coord2):
     X, Y = 0, 1
     binary_image = adaptive_threshold(image)
 

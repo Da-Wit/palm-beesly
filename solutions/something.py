@@ -56,6 +56,7 @@ def init_finger_coords(pip_coords, mcp_coords, width, height):
     return (copied_pip, copied_mcp)
 
 def get_palm(image):
+    cnt = utils.get_contour(image)
     landmark = utils.get_hand_form(image, mp_hands)
     if not landmark:
         return None
@@ -121,7 +122,7 @@ def get_palm(image):
     # The reason why I plus 2(EXTRA_LENGTH_EXCEPT_FINGERS) is because palm_coords
     # Includes the coordinates of thumb and wrist
     # Not just fingers' coordinates
-    length_of_palm_coods = len(pip_coords)+EXTRA_LENGTH_EXCEPT_FINGERS
+    length_of_palm_coods = len(pip_coords) + EXTRA_LENGTH_EXCEPT_FINGERS
     palm_coords = np.empty((length_of_palm_coods, 2), dtype=np.int32)
     palm_coords[0] =  thumb_coord
     palm_coords[1] = wrist_coord
@@ -131,12 +132,22 @@ def get_palm(image):
 
     for i in range(len(pip_coords)):
         palm_coords[i +
-                    EXTRA_LENGTH_EXCEPT_FINGERS] = utils.get_intersection(img, pip_coords[i], mcp_coords[i])
+                    EXTRA_LENGTH_EXCEPT_FINGERS] = utils.get_finger_intersection(img, pip_coords[i], mcp_coords[i])
 
-    ret, thresh = utils.threshold(img)
-    mask = np.zeros(thresh.shape).astype(thresh.dtype)
-    cv2.fillPoly(mask, [palm_coords], [255, 255, 255])
-    img = cv2.bitwise_and(img, img, mask=mask)
+    cnt = utils.get_contour(image)
+    pinky = palm_coords[EXTRA_LENGTH_EXCEPT_FINGERS]
+    ring = palm_coords[EXTRA_LENGTH_EXCEPT_FINGERS+1]
+    aws = utils.aws(image,cnt,pinky,ring)
+    aws2 = utils.aws(image,cnt,wrist_coord,thumb_coord)
+    part_of_contour = utils.get_part_of_contour(image,cnt,aws,aws2)
+    # img = cv2.circle(img,aws,3,(255,0,0),5)
+    img = cv2.polylines(img,[part_of_contour],False,(255,0,0),5)
+
+    print(part_of_contour)
+    for palm_coord in palm_coords:
+        img = cv2.circle(img,palm_coord,3,(255,0,0),1)
+
+    # img = cv2.bitwise_and(img, img, mask=mask)
 
     # print("palm_coords",)
 
