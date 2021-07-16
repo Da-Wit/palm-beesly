@@ -26,11 +26,14 @@ def canny(image):
     blur = cv2.GaussianBlur(equalized, (9, 9), 0)
     return cv2.Canny(blur, 10, 120, apertureSize=3)
 
+
 def get_distance(coord1, coord2):
     return ((coord1[0]-coord2[0])**2 + (coord1[1]-coord2[1])**2)**(1/2)
 
+
 def get_degree(coord1, coord2):
     return (coord1[1] - coord2[1])/((coord1[0] - coord2[0])+10**(-9))
+
 
 def adaptive_threshold(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -50,14 +53,16 @@ def threshold(image):
     return ret, thresh
 
 # coord1 is closer to cnt than coord2
-def aws(image,cnt, coord1, coord2):
-    degree = get_degree(coord1,coord2)
+
+
+def aws(image, cnt, coord1, coord2):
+    degree = get_degree(coord1, coord2)
     # luxk is a coordinate on a linear equation
     # that includes both of coord1 and coord2.
     # Distance of luxk-coord1 and
     # distance of coord1-coord2 are same.
     # Also, luxk is closer to coord1 than coord2.
-    luxk = np.array([2*coord1[0]-coord2[0],2*coord1[1]-coord2[1]])
+    luxk = np.array([2*coord1[0]-coord2[0], 2*coord1[1]-coord2[1]])
 
     if coord1[0] > luxk[0]:
         bigger_x = coord1[0]
@@ -74,13 +79,14 @@ def aws(image,cnt, coord1, coord2):
         smaller_y = coord1[1]
 
     min_degree_gap = 999999999999
-    coord_of_min_degree_gap = np.array([0,0])
-    for [[cnt_x,cnt_y]] in cnt:
+    coord_of_min_degree_gap = np.array([0, 0])
+    for [[cnt_x, cnt_y]] in cnt:
         if cnt_x <= bigger_x and cnt_x >= smaller_x and cnt_y <= bigger_y and cnt_y >= smaller_y:
-            degree_gap = abs(get_degree(np.array([cnt_x,cnt_y]),coord1) - degree)
+            degree_gap = abs(get_degree(
+                np.array([cnt_x, cnt_y]), coord1) - degree)
             if degree_gap < min_degree_gap:
                 min_degree_gap = degree_gap
-                coord_of_min_degree_gap = np.array([cnt_x,cnt_y])
+                coord_of_min_degree_gap = np.array([cnt_x, cnt_y])
     return coord_of_min_degree_gap
 
 
@@ -139,7 +145,7 @@ def get_hand_form(image, mp_hands):
 
 # mediapipe 라이브버리 예제(https://google.github.io/mediapipe/solutions/hands.html)
 # 에서 사용된 기본 손 감지 코드
-def get_palm_original(image, mp_hands,mp_drawing):
+def get_palm_original(image, mp_hands, mp_drawing):
     with mp_hands.Hands(
             static_image_mode=True,
             max_num_hands=1,
@@ -153,8 +159,8 @@ def get_palm_original(image, mp_hands,mp_drawing):
             return None
         img = cv2.flip(img, 1)
         for hand_landmarks in results.multi_hand_landmarks:
-              mp_drawing.draw_landmarks(
-                  img, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+            mp_drawing.draw_landmarks(
+                img, hand_landmarks, mp_hands.HAND_CONNECTIONS)
         return img
 
 
@@ -165,10 +171,10 @@ def get_contour(image):
     return get_max_contour(contours)
 
 
-def get_part_of_contour(image,contour,coord1,coord2):
+def get_part_of_contour(image, contour, coord1, coord2):
     # make iterable coords tuple to execute for loop
-    coords = (coord1,coord2)
-    indices_of_coords = np.zeros((2,3), dtype=int)
+    coords = (coord1, coord2)
+    indices_of_coords = np.zeros((2, 3), dtype=int)
 
     for index in range(len(coords)):
 
@@ -179,8 +185,6 @@ def get_part_of_contour(image,contour,coord1,coord2):
         for i in ihsvwc:
             if coord[0] == contour[i[0]][i[1]][0] and coord[1] == contour[i[0]][i[1]][1]:
                 indices_of_coords[index] = i
-
-
 
     if indices_of_coords[0][0] < indices_of_coords[1][0]:
         smaller_index = indices_of_coords[0][0]

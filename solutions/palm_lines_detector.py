@@ -19,7 +19,6 @@ weird_palm = something.get_palm(image)
 cv2.imshow("weird_palm", weird_palm)
 
 
-
 # hsvim = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
 # img2 = utils.remove_bground(image)
