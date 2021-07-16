@@ -194,25 +194,3 @@ def get_part_of_contour(image,contour,coord1,coord2):
     part_of_contour = contour[smaller_index:bigger_index+1]
 
     return part_of_contour, isCoord1IndexBiggerThanCoord2Index
-
-
-# 손가락 3번째 마디 부분의 좌표값들을 지닌 배열(coord2)과
-# 3번째 마디 약간 아래의 손바닥 부분의 좌표값들을 지닌
-# 배열(coord1)을 이용해서 coord1과 coord2의 각각의
-# 좌표들로 직선을 만들어서 그 직선 안에서
-# 손가락 3번째 마디가 끝나는, 3번째 마디와
-# 손바닥 부분의 경계의 좌표를 구해서
-# 반환하는 함수
-def get_finger_intersection(image, coord1, coord2):
-    X, Y = 0, 1
-    binary_image = adaptive_threshold(image)
-
-    # y1 is bigger than y2
-    y1, y2, x1, x2 = 0, 0, 0, 0
-    if(coord2[Y] > coord1[Y]):
-        y1, x1 = coord2[Y], coord2[X]
-        y2, x2 = coord1[Y], coord1[X]
-    else:
-        y1, x1 = coord1[Y], coord1[X]
-        y2, x2 = coord2[Y], coord2[X]
-    return calculator.get_intersection(binary_image, x1, y1, x2, y2)

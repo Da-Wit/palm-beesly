@@ -4,177 +4,127 @@ import numpy as np
 import utils
 import calculator
 
-mp_hands = mp.solutions.hands
-
 # 숫자가 크면 클수록 pip와 mcp 사이의 간격이 커집니다.
 # 소수도 가능하고, 에러가 나면 이 수를 키우거나 줄이면 됩니다.
-EXTREME_CUTTING_RATIO = 6
-EXTRA_LENGTH_EXCEPT_FINGERS = 2
+# DFER: Default Finger Expansion Ratio
+DFER = 6
 
-WRIST = 0
-THUMB_CMC = 1
-THUMB_MCP = 2
-THUMB_IP = 3
-THUMB_TIP = 4
-INDEX_FINGER_MCP = 5
-INDEX_FINGER_PIP = 6
-INDEX_FINGER_DIP = 7
-INDEX_FINGER_TIP = 8
-MIDDLE_FINGER_MCP = 9
-MIDDLE_FINGER_PIP = 10
-MIDDLE_FINGER_DIP = 11
-MIDDLE_FINGER_TIP = 12
-RING_FINGER_MCP = 13
-RING_FINGER_PIP = 14
-RING_FINGER_DIP = 15
-RING_FINGER_TIP = 16
-PINKY_MCP = 17
-PINKY_PIP = 18
-PINKY_DIP = 19
-PINKY_TIP = 20
+mp_hands = mp.solutions.hands
+WRIST = mp_hands.HandLandmark.WRIST
+THUMB_CMC = mp_hands.HandLandmark.THUMB_CMC
+THUMB_MCP = mp_hands.HandLandmark.THUMB_MCP
+THUMB_IP = mp_hands.HandLandmark.THUMB_IP
+THUMB_TIP = mp_hands.HandLandmark.THUMB_TIP
+INDEX_FINGER_MCP = mp_hands.HandLandmark.INDEX_FINGER_MCP
+INDEX_FINGER_PIP = mp_hands.HandLandmark.INDEX_FINGER_PIP
+INDEX_FINGER_DIP = mp_hands.HandLandmark.INDEX_FINGER_DIP
+INDEX_FINGER_TIP = mp_hands.HandLandmark.INDEX_FINGER_TIP
+MIDDLE_FINGER_MCP = mp_hands.HandLandmark.MIDDLE_FINGER_MCP
+MIDDLE_FINGER_PIP = mp_hands.HandLandmark.MIDDLE_FINGER_PIP
+MIDDLE_FINGER_DIP = mp_hands.HandLandmark.MIDDLE_FINGER_DIP
+MIDDLE_FINGER_TIP = mp_hands.HandLandmark.MIDDLE_FINGER_TIP
+RING_FINGER_MCP = mp_hands.HandLandmark.RING_FINGER_MCP
+RING_FINGER_PIP = mp_hands.HandLandmark.RING_FINGER_PIP
+RING_FINGER_DIP = mp_hands.HandLandmark.RING_FINGER_DIP
+RING_FINGER_TIP = mp_hands.HandLandmark.RING_FINGER_TIP
+PINKY_MCP = mp_hands.HandLandmark.PINKY_MCP
+PINKY_PIP = mp_hands.HandLandmark.PINKY_PIP
+PINKY_DIP = mp_hands.HandLandmark.PINKY_DIP
+PINKY_TIP = mp_hands.HandLandmark.PINKY_TIP
 
 
-def init_finger_coords(pip_coords, mcp_coords, width, height):
-    copied_pip = pip_coords.copy()
-    copied_mcp = mcp_coords.copy()
-    for i in range(len(pip_coords)):
-        X, Y = 0, 1
+def get_coord(x, y, width, height):
+    return np.array([int(x * width),int(y * height)])
 
-        pip_y, pip_x = copied_pip[i][Y], copied_pip[i][X]
-        mcp_y, mcp_x = copied_mcp[i][Y], copied_mcp[i][X]
+def get_finger_coord(target, neighbor, width, height, ratio=DFER):
+    return get_coord(
+                     target.x + ((neighbor.x - target.x) / ratio),
+                     target.y + ((neighbor.y - target.y) / ratio),
+                     width,
+                     height)
 
-        copied_pip[i] = (
-            int((pip_x + ((mcp_x - pip_x) / EXTREME_CUTTING_RATIO)) * width),
-            int((pip_y + ((mcp_y - pip_y) / EXTREME_CUTTING_RATIO)) * height),
-        )
-        copied_mcp[i] = (
-            int((mcp_x + ((pip_x - mcp_x) / EXTREME_CUTTING_RATIO)) * width),
-            int((mcp_y + ((pip_y - mcp_y) / EXTREME_CUTTING_RATIO)) * height),
-        )
-    copied_pip = np.array(copied_pip, dtype=np.int32)
-    copied_mcp = np.array(copied_mcp, dtype=np.int32)
-    return (copied_pip, copied_mcp)
+def get_intersection_coord_between_finger_and_palm(pip_mp, mcp_mp, img, pip_ratio=DFER, mcp_ratio=DFER):
+    height, width, _ = img.shape
+    pip = get_finger_coord(pip_mp, mcp_mp, width, height, pip_ratio)
+    mcp = get_finger_coord(mcp_mp, pip_mp, width, height, mcp_ratio)
+    X, Y = 0, 1
+    binary_img = utils.adaptive_threshold(img)
+
+    # y1 must be bigger than y2
+    y1, y2, x1, x2 = 0, 0, 0, 0
+    if(mcp[Y] > pip[Y]):
+        y1, x1 = mcp[Y], mcp[X]
+        y2, x2 = pip[Y], pip[X]
+    else:
+        y1, x1 = pip[Y], pip[X]
+        y2, x2 = mcp[Y], mcp[X]
+    return calculator.get_intersection(binary_img, x1, y1, x2, y2)
+
+def get_coords(landmark, img):
+    height, width, _ = img.shape
+    wrist = get_coord(landmark[WRIST].x, landmark[WRIST].y, width, height)
+
+    # thumb_x = (landmark[THUMB_CMC].x + landmark[THUMB_MCP].x) / 2
+    # thumb_y = (landmark[THUMB_CMC].y + landmark[THUMB_MCP].y) / 2
+    thumb = get_finger_coord(landmark[THUMB_CMC], landmark[THUMB_MCP], width, height, ratio=2)
+    pinky = get_intersection_coord_between_finger_and_palm(landmark[PINKY_PIP],
+                                                           landmark[PINKY_MCP],
+                                                           img)
+    ring = get_intersection_coord_between_finger_and_palm(landmark[RING_FINGER_PIP],
+                                                          landmark[RING_FINGER_MCP],
+                                                          img)
+    middle = get_intersection_coord_between_finger_and_palm(landmark[MIDDLE_FINGER_PIP],
+                                                            landmark[MIDDLE_FINGER_MCP],
+                                                            img)
+    index = get_intersection_coord_between_finger_and_palm(landmark[INDEX_FINGER_PIP],
+                                                           landmark[INDEX_FINGER_MCP],
+                                                           img)
+    # # In finger, pip is the fourth joint and mcp is the third one.
+    # pinky_pip = get_finger_coord(landmark[PINKY_PIP], landmark[PINKY_MCP], width, height, ratio=DFER)
+    # ring_pip = get_finger_coord(landmark[RING_FINGER_PIP], landmark[RING_FINGER_MCP], width, height, ratio=DFER)
+    # middle_pip = get_finger_coord(landmark[MIDDLE_FINGER_PIP], landmark[MIDDLE_FINGER_MCP], width, height, ratio=DFER)
+    # index_pip = get_finger_coord(landmark[INDEX_FINGER_PIP], landmark[INDEX_FINGER_MCP], width, height, ratio=DFER)
+    #
+    # pinky_mcp = get_finger_coord(landmark[PINKY_MCP], landmark[PINKY_PIP], width, height, ratio=DFER)
+    # ring_mcp = get_finger_coord(landmark[RING_FINGER_MCP], landmark[RING_FINGER_PIP], width, height, ratio=DFER)
+    # middle_mcp = get_finger_coord(landmark[MIDDLE_FINGER_MCP], landmark[MIDDLE_FINGER_PIP], width, height, ratio=DFER)
+    # index_mcp = get_finger_coord(landmark[INDEX_FINGER_MCP], landmark[INDEX_FINGER_PIP], width, height, ratio=DFER)
+    return wrist, thumb, pinky, ring, middle, index
 
 def get_palm(image):
-    cnt = utils.get_contour(image)
-    landmark = utils.get_hand_form(image, mp_hands)
+    img = image.copy()
+    landmark = utils.get_hand_form(img, mp_hands)
     if not landmark:
         return None
 
-    img = image.copy()
-    image_height, image_width, _ = img.shape
+    wrist, thumb, pinky, ring, middle, index = get_coords(landmark, img)
 
-    wrist_coord = (
-        int(landmark[mp_hands.HandLandmark.WRIST].x * image_width),
-        int(landmark[mp_hands.HandLandmark.WRIST].y * image_height)
-    )
+    palm_coords = np.array([thumb, wrist, pinky, ring, middle, index], dtype=np.int32)
 
-    thumb_coord = (
-             int((landmark[mp_hands.HandLandmark.THUMB_CMC].x + landmark[mp_hands.HandLandmark.THUMB_MCP].x) / 2 * image_width),
-             int((landmark[mp_hands.HandLandmark.THUMB_CMC].y + landmark[mp_hands.HandLandmark.THUMB_MCP].y) / 2 * image_height)
-    )
+    cnt = utils.get_contour(img)
 
+    aws = utils.aws(img,cnt,pinky,ring)
+    aws2 = utils.aws(img,cnt,wrist,thumb)
 
-    # fingers are ordered by pinky, ring, middle, index
-    # In finger, pip is the fourth joint and mcp is the third one.
-    pip_coords = np.array(
-        [
-            (
-                landmark[mp_hands.HandLandmark.PINKY_PIP].x,
-                landmark[mp_hands.HandLandmark.PINKY_PIP].y,
-            ),
-            (
-                landmark[mp_hands.HandLandmark.RING_FINGER_PIP].x,
-                landmark[mp_hands.HandLandmark.RING_FINGER_PIP].y,
-            ),
-            (
-                landmark[mp_hands.HandLandmark.MIDDLE_FINGER_PIP].x,
-                landmark[mp_hands.HandLandmark.MIDDLE_FINGER_PIP].y,
-            ),
-            (
-                landmark[mp_hands.HandLandmark.INDEX_FINGER_PIP].x,
-                landmark[mp_hands.HandLandmark.INDEX_FINGER_PIP].y,
-            )
-        ], np.float64
-    )
-    mcp_coords = np.array(
-        [
-                         (
-                             landmark[mp_hands.HandLandmark.PINKY_MCP].x,
-                             landmark[mp_hands.HandLandmark.PINKY_MCP].y,
-                         ),
-            (
-                             landmark[mp_hands.HandLandmark.RING_FINGER_MCP].x,
-                             landmark[mp_hands.HandLandmark.RING_FINGER_MCP].y,
-                         ),
-            (
-                             landmark[mp_hands.HandLandmark.MIDDLE_FINGER_MCP].x,
-                             landmark[mp_hands.HandLandmark.MIDDLE_FINGER_MCP].y,
-                         ),
-            (
-                             landmark[mp_hands.HandLandmark.INDEX_FINGER_MCP].x,
-                             landmark[mp_hands.HandLandmark.INDEX_FINGER_MCP].y,
-                         )
-        ], np.float64
-    )
-
-
-    # The reason why I plus 2(EXTRA_LENGTH_EXCEPT_FINGERS) is because palm_coords
-    # Includes the coordinates of thumb and wrist
-    # Not just fingers' coordinates
-    length_of_palm_coods = len(pip_coords) + EXTRA_LENGTH_EXCEPT_FINGERS
-    palm_coords = np.empty((length_of_palm_coods, 2), dtype=np.int32)
-    palm_coords[0] =  thumb_coord
-    palm_coords[1] = wrist_coord
-
-    pip_coords, mcp_coords = init_finger_coords(
-        pip_coords, mcp_coords, image_width, image_height)
-
-    for i in range(len(pip_coords)):
-        palm_coords[i +
-                    EXTRA_LENGTH_EXCEPT_FINGERS] = utils.get_finger_intersection(img, pip_coords[i], mcp_coords[i])
-
-    cnt = utils.get_contour(image)
-    # img = cv2.polylines(img,[cnt],True,(255,0,255),2)
-
-    pinky = palm_coords[EXTRA_LENGTH_EXCEPT_FINGERS]
-    ring = palm_coords[EXTRA_LENGTH_EXCEPT_FINGERS+1]
-    middle = palm_coords[EXTRA_LENGTH_EXCEPT_FINGERS+2]
-    index = palm_coords[EXTRA_LENGTH_EXCEPT_FINGERS+3]
-
-
-    aws = utils.aws(image,cnt,pinky,ring)
-    aws2 = utils.aws(image,cnt,wrist_coord,thumb_coord)
-
-    # img = cv2.circle(img,pinky,10,(0,255,0),3)
-    # img = cv2.circle(img,ring,10,(0,255,0),3)
-    # img = cv2.circle(img,aws,10,(0,255,0),3)
-    # img = cv2.circle(img,aws2,10,(0,255,0),3)
-
-    part_of_contour, isFingerIndexBiggerThanHandBottomIndex = utils.get_part_of_contour(image,cnt,aws,aws2)
-    # img = cv2.circle(img,aws,3,(255,0,0),5)
+    part_of_contour, isFingerIndexBiggerThanHandBottomIndex = utils.get_part_of_contour(img,cnt,aws,aws2)
 
     img = cv2.polylines(img,[part_of_contour],False,(255,255,0),1)
-    nparray_thumb = np.array([thumb_coord])
-    nparray_wrist = np.array([wrist_coord])
-
 
     if isFingerIndexBiggerThanHandBottomIndex:
-        part_of_contour = np.insert(part_of_contour,0,nparray_thumb, axis=0)
-        part_of_contour = np.insert(part_of_contour,1,nparray_wrist, axis=0)
+        part_of_contour = np.insert(part_of_contour,0,thumb, axis=0)
+        part_of_contour = np.insert(part_of_contour,1,wrist, axis=0)
     else:
-        part_of_contour = np.append(part_of_contour, np.array([nparray_wrist,nparray_thumb]), axis=0)
-        img = cv2.polylines(img,[part_of_contour],False,(255,255,0),1)
+        part_of_contour = np.append(part_of_contour, np.array([wrist,thumb]), axis=0)
+
+
     img = cv2.polylines(img,[part_of_contour],False,(255,255,0),1)
 
-
-
-
-    # print("part_of_contour: ",part_of_contour)
     for palm_coord in palm_coords:
         img = cv2.circle(img,palm_coord,3,(255,0,0),1)
 
+    # ret, thresh = utils.threshold(img)
+    # mask = np.zeros(thresh.shape).astype(thresh.dtype)
+    # cv2.fillPoly(mask, [palm_coords], [255, 255, 255])
     # img = cv2.bitwise_and(img, img, mask=mask)
-
 
     return img
