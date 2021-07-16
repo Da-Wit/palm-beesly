@@ -135,20 +135,28 @@ def get_palm(image):
                     EXTRA_LENGTH_EXCEPT_FINGERS] = utils.get_finger_intersection(img, pip_coords[i], mcp_coords[i])
 
     cnt = utils.get_contour(image)
+    img = cv2.polylines(img,[cnt],True,(255,0,255),2)
+
     pinky = palm_coords[EXTRA_LENGTH_EXCEPT_FINGERS]
     ring = palm_coords[EXTRA_LENGTH_EXCEPT_FINGERS+1]
     aws = utils.aws(image,cnt,pinky,ring)
     aws2 = utils.aws(image,cnt,wrist_coord,thumb_coord)
+
+    img = cv2.circle(img,pinky,10,(0,255,0),3)
+    img = cv2.circle(img,ring,10,(0,255,0),3)
+    img = cv2.circle(img,aws,10,(0,255,0),3)
+    img = cv2.circle(img,aws2,10,(0,255,0),3)
+
     part_of_contour = utils.get_part_of_contour(image,cnt,aws,aws2)
     # img = cv2.circle(img,aws,3,(255,0,0),5)
+
     img = cv2.polylines(img,[part_of_contour],False,(255,0,0),5)
 
-    print(part_of_contour)
+    # print("part_of_contour: ",part_of_contour)
     for palm_coord in palm_coords:
         img = cv2.circle(img,palm_coord,3,(255,0,0),1)
 
     # img = cv2.bitwise_and(img, img, mask=mask)
 
-    # print("palm_coords",)
 
     return img

@@ -171,6 +171,7 @@ def get_part_of_contour(image,contour,coord1,coord2):
     indices_of_coords = np.zeros((2,3), dtype=int)
 
     for index in range(len(coords)):
+
         coord = coords[index]
 
         # indices having same value with coord
@@ -178,7 +179,16 @@ def get_part_of_contour(image,contour,coord1,coord2):
         for i in ihsvwc:
             if coord[0] == contour[i[0]][i[1]][0] and coord[1] == contour[i[0]][i[1]][1]:
                 indices_of_coords[index] = i
-    part_of_contour = contour[indices_of_coords[0][0]:indices_of_coords[1][0]+1]
+
+    if indices_of_coords[0][0] < indices_of_coords[1][0]:
+        smaller_index = indices_of_coords[0][0]
+        bigger_index = indices_of_coords[1][0]
+    else:
+        smaller_index = indices_of_coords[1][0]
+        bigger_index = indices_of_coords[0][0]
+
+    part_of_contour = contour[smaller_index:bigger_index+1]
+
     return part_of_contour
 
 

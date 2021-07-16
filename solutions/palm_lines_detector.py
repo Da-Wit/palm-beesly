@@ -4,13 +4,13 @@ import utils
 import mediapipe as mp
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
-image_path = "C:/Users/USER/workspace/palm/images/sample3.png"
+image_path = "C:/Users/USER/workspace/palm/images/sample1.png"
 image = cv2.imread(image_path)
 image = utils.resize(image, height=600)
 image = utils.remove_bground(image)
 
 
-cv2.imshow("original", image)
+# cv2.imshow("original", image)
 
 mp_palm = utils.get_palm_original(image, mp_hands, mp_drawing)
 cv2.imshow("palm_ori", mp_palm)
