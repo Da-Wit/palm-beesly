@@ -162,8 +162,8 @@ def get_palm(image):
     if isFingerIndexBiggerThanHandBottomIndex:
         part_of_contour = np.insert(part_of_contour,0,nparray_thumb, axis=0)
         part_of_contour = np.insert(part_of_contour,1,nparray_wrist, axis=0)
-        # img = cv2.polylines(img,[part_of_contour],False,(255,255,0),1)
     else:
+        part_of_contour = np.append(part_of_contour, np.array([nparray_wrist,nparray_thumb]), axis=0)
         img = cv2.polylines(img,[part_of_contour],False,(255,255,0),1)
     img = cv2.polylines(img,[part_of_contour],False,(255,255,0),1)
 
