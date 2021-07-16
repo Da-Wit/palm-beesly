@@ -4,7 +4,7 @@ import utils
 import mediapipe as mp
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
-image_path = "C:/Users/USER/workspace/palm/images/sample1.png"
+image_path = "C:/Users/USER/workspace/palm/images/sample2.png"
 image = cv2.imread(image_path)
 image = utils.resize(image, height=600)
 image = utils.remove_bground(image)

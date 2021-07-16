@@ -180,16 +180,20 @@ def get_part_of_contour(image,contour,coord1,coord2):
             if coord[0] == contour[i[0]][i[1]][0] and coord[1] == contour[i[0]][i[1]][1]:
                 indices_of_coords[index] = i
 
+
+
     if indices_of_coords[0][0] < indices_of_coords[1][0]:
         smaller_index = indices_of_coords[0][0]
         bigger_index = indices_of_coords[1][0]
+        isCoord1IndexBiggerThanCoord2Index = False
     else:
         smaller_index = indices_of_coords[1][0]
         bigger_index = indices_of_coords[0][0]
+        isCoord1IndexBiggerThanCoord2Index = True
 
     part_of_contour = contour[smaller_index:bigger_index+1]
 
-    return part_of_contour
+    return part_of_contour, isCoord1IndexBiggerThanCoord2Index
 
 
 # 손가락 3번째 마디 부분의 좌표값들을 지닌 배열(coord2)과

@@ -135,22 +135,40 @@ def get_palm(image):
                     EXTRA_LENGTH_EXCEPT_FINGERS] = utils.get_finger_intersection(img, pip_coords[i], mcp_coords[i])
 
     cnt = utils.get_contour(image)
-    img = cv2.polylines(img,[cnt],True,(255,0,255),2)
+    # img = cv2.polylines(img,[cnt],True,(255,0,255),2)
 
     pinky = palm_coords[EXTRA_LENGTH_EXCEPT_FINGERS]
     ring = palm_coords[EXTRA_LENGTH_EXCEPT_FINGERS+1]
+    middle = palm_coords[EXTRA_LENGTH_EXCEPT_FINGERS+2]
+    index = palm_coords[EXTRA_LENGTH_EXCEPT_FINGERS+3]
+
+
     aws = utils.aws(image,cnt,pinky,ring)
     aws2 = utils.aws(image,cnt,wrist_coord,thumb_coord)
 
-    img = cv2.circle(img,pinky,10,(0,255,0),3)
-    img = cv2.circle(img,ring,10,(0,255,0),3)
-    img = cv2.circle(img,aws,10,(0,255,0),3)
-    img = cv2.circle(img,aws2,10,(0,255,0),3)
+    # img = cv2.circle(img,pinky,10,(0,255,0),3)
+    # img = cv2.circle(img,ring,10,(0,255,0),3)
+    # img = cv2.circle(img,aws,10,(0,255,0),3)
+    # img = cv2.circle(img,aws2,10,(0,255,0),3)
 
-    part_of_contour = utils.get_part_of_contour(image,cnt,aws,aws2)
+    part_of_contour, isFingerIndexBiggerThanHandBottomIndex = utils.get_part_of_contour(image,cnt,aws,aws2)
     # img = cv2.circle(img,aws,3,(255,0,0),5)
 
-    img = cv2.polylines(img,[part_of_contour],False,(255,0,0),5)
+    img = cv2.polylines(img,[part_of_contour],False,(255,255,0),1)
+    nparray_thumb = np.array([thumb_coord])
+    nparray_wrist = np.array([wrist_coord])
+
+
+    if isFingerIndexBiggerThanHandBottomIndex:
+        part_of_contour = np.insert(part_of_contour,0,nparray_thumb, axis=0)
+        part_of_contour = np.insert(part_of_contour,1,nparray_wrist, axis=0)
+        # img = cv2.polylines(img,[part_of_contour],False,(255,255,0),1)
+    else:
+        img = cv2.polylines(img,[part_of_contour],False,(255,255,0),1)
+    img = cv2.polylines(img,[part_of_contour],False,(255,255,0),1)
+
+
+
 
     # print("part_of_contour: ",part_of_contour)
     for palm_coord in palm_coords:
