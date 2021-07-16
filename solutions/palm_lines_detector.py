@@ -7,10 +7,13 @@ mp_drawing = mp.solutions.drawing_utils
 image_path = "C:/Users/USER/workspace/palm/images/sample4.png"
 image = cv2.imread(image_path)
 image = utils.resize(image, height=600)
+# TODO make remove_all_except_hand function,
+# Before removing background,
+# remove everything except hand areas.
+# If you don't, invoking remove_bground function
+# may remove hand.
 image = utils.remove_bground(image)
 
-
-# cv2.imshow("original", image)
 
 mp_palm = utils.get_palm_original(image, mp_hands, mp_drawing)
 cv2.imshow("palm_ori", mp_palm)
