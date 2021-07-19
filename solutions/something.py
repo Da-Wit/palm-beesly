@@ -66,13 +66,16 @@ def get_intersection_coord_between_finger_and_palm(pip_mp, mcp_mp, img, pip_rati
 
 def get_coords(landmark, img):
     height, width, _ = img.shape
+    thumb_outside = get_coord(
+        landmark[THUMB_MCP].x, landmark[THUMB_MCP].y, width, height)
+    thumb_mid = get_finger_coord(
+        landmark[THUMB_CMC], landmark[THUMB_MCP], width, height, ratio=2)
+    thumb_inside = get_finger_coord(
+        landmark[THUMB_CMC], landmark[WRIST], width, height, ratio=200)
     wrist = get_coord(landmark[WRIST].x, landmark[WRIST].y, width, height)
-    middle_between_thumb_wrist = get_coord(landmark[THUMB_CMC].x, landmark[THUMB_CMC].y, width, height)
+    middle_between_thumb_wrist = get_coord(
+        landmark[THUMB_CMC].x, landmark[THUMB_CMC].y, width, height)
 
-    # thumb_x = (landmark[THUMB_CMC].x + landmark[THUMB_MCP].x) / 2
-    # thumb_y = (landmark[THUMB_CMC].y + landmark[THUMB_MCP].y) / 2
-    thumb = get_finger_coord(
-        landmark[THUMB_IP], landmark[THUMB_MCP], width, height, ratio=2)
     pinky = get_intersection_coord_between_finger_and_palm(landmark[PINKY_PIP],
                                                            landmark[PINKY_MCP],
                                                            img)
@@ -85,19 +88,10 @@ def get_coords(landmark, img):
     index = get_intersection_coord_between_finger_and_palm(landmark[INDEX_FINGER_PIP],
                                                            landmark[INDEX_FINGER_MCP],
                                                            img)
+    index_inside = get_coord(
+        landmark[INDEX_FINGER_MCP].x, landmark[INDEX_FINGER_MCP].y, width, height)
 
-
-    # # In finger, pip is the fourth joint and mcp is the third one.
-    # pinky_pip = get_finger_coord(landmark[PINKY_PIP], landmark[PINKY_MCP], width, height, ratio=DFER)
-    # ring_pip = get_finger_coord(landmark[RING_FINGER_PIP], landmark[RING_FINGER_MCP], width, height, ratio=DFER)
-    # middle_pip = get_finger_coord(landmark[MIDDLE_FINGER_PIP], landmark[MIDDLE_FINGER_MCP], width, height, ratio=DFER)
-    # index_pip = get_finger_coord(landmark[INDEX_FINGER_PIP], landmark[INDEX_FINGER_MCP], width, height, ratio=DFER)
-    #
-    # pinky_mcp = get_finger_coord(landmark[PINKY_MCP], landmark[PINKY_PIP], width, height, ratio=DFER)
-    # ring_mcp = get_finger_coord(landmark[RING_FINGER_MCP], landmark[RING_FINGER_PIP], width, height, ratio=DFER)
-    # middle_mcp = get_finger_coord(landmark[MIDDLE_FINGER_MCP], landmark[MIDDLE_FINGER_PIP], width, height, ratio=DFER)
-    # index_mcp = get_finger_coord(landmark[INDEX_FINGER_MCP], landmark[INDEX_FINGER_PIP], width, height, ratio=DFER)
-    return wrist, thumb, middle_between_thumb_wrist, pinky, ring, middle, index
+    return thumb_outside, thumb_mid, thumb_inside, wrist, middle_between_thumb_wrist, pinky, ring, middle, index, index_inside
 
 
 def get_palm(image):
@@ -106,71 +100,38 @@ def get_palm(image):
     if not landmark:
         return None
 
-    wrist, thumb, middle_between_thumb_wrist, pinky, ring, middle, index = get_coords(landmark, img)
+    thumb_outside, thumb_mid, thumb_inside, wrist, middle_between_thumb_wrist, pinky, ring, middle, index, index_inside = get_coords(
+        landmark, img)
 
     palm_coords = np.array(
-        [thumb, wrist, pinky, ring, middle, index], dtype=np.int32)
+        [thumb_mid, wrist, pinky, ring, middle, index], dtype=np.int32)
 
     cnt = utils.get_contour(img)
 
     aws = utils.aws(img, cnt, pinky, ring)
-    aws2 = utils.aws(img, cnt, wrist, thumb)
+    aws2 = utils.aws(img, cnt, wrist, thumb_mid)
 
-    aws3 = utils.aws_new(img, cnt, index, middle)
-    aws4 = utils.aws(img, cnt, middle_between_thumb_wrist, index)
+    # aws3 = utils.aws_new(img, cnt, index, middle)
 
-    # img = cv2.polylines(img, [cnt], True, (255, 255, 0), 1)
-    # img = cv2.rectangle(img, index,middle, (255, 255, 0), 1)
-
-    # print(aws3)
-    # aws4 = utils.aws(img, cnt, thumb, aws3)
-    #
-    # print(aws)
-    # print(aws2)
-
-    # img = cv2.circle(img, aws3, 3, (0, 0, 255), 4)
-    # img = cv2.circle(img, aws4, 3, (0, 0, 255), 4)
-
-
-    # img = cv2.circle(img, aws3, 1, (255, 0, 0), 3)
+    aws4 = utils.aws(img, cnt, thumb_outside, index_inside)
+    aws5 = utils.aws(img, cnt, thumb_mid, index_inside)
+    aws6 = utils.aws(img, cnt, thumb_inside, index_inside)
 
     part_of_contour, isFingerIndexBiggerThanHandBottomIndex = utils.get_part_of_contour(
         img, cnt, aws, aws2)
 
-    # img = cv2.polylines(img, [part_of_contour], False, (255, 255, 0), 1)
-    # img = cv2.polylines(img, [aws3, aws4], False, (255, 255, 0), 1)
+    coords = np.array([[pinky], [ring], [middle], [
+                      index], [aws4], [aws5], [aws6]])
 
     if isFingerIndexBiggerThanHandBottomIndex:
-        # part_of_contour = np.insert(part_of_contour, 0, thumb, axis=0)
-        # part_of_contour = np.insert(part_of_contour, 1, wrist, axis=0)
-        print("pinky:", pinky)
-        print("aws4:", aws4)
-
-        print("len pinky:", len(pinky))
-        print("len aws4:", len(aws4))
-        part_of_contour = np.append(part_of_contour, [[pinky]], axis=0)
-        part_of_contour = np.append(part_of_contour, [[ring]], axis=0)
-        part_of_contour = np.append(part_of_contour, [[middle]], axis=0)
-        part_of_contour = np.append(part_of_contour, [[index]], axis=0)
-        part_of_contour = np.append(part_of_contour, [[thumb]], axis=0)
-        part_of_contour = np.append(part_of_contour, [[aws4]], axis=0)
+        part_of_contour = np.append(part_of_contour, coords, axis=0)
     else:
-        part_of_contour = np.append(part_of_contour, [[aws4]], axis=0)
-        part_of_contour = np.append(part_of_contour, [[thumb]], axis=0)
-        part_of_contour = np.append(part_of_contour, [[index]], axis=0)
-        part_of_contour = np.append(part_of_contour, [[middle]], axis=0)
-        part_of_contour = np.append(part_of_contour, [[ring]], axis=0)
-        part_of_contour = np.append(part_of_contour, [[pinky]], axis=0)
+        part_of_contour = np.append(part_of_contour, np.flipud(coords), axis=0)
+    cv2.polylines(img, [part_of_contour], True, (255, 255, 0), 2)
 
-
-    # img = cv2.polylines(img, [part_of_contour], True, (255, 255, 0), 1)
-
-    # for palm_coord in palm_coords:
-    #     img = cv2.circle(img, palm_coord, 3, (255, 0, 0), 1)
-
-    ret, thresh = utils.threshold(img)
-    mask = np.zeros(thresh.shape).astype(thresh.dtype)
-    cv2.fillPoly(mask, [part_of_contour], [255, 255, 255])
-    img = cv2.bitwise_and(img, img, mask=mask)
+    # ret, thresh = utils.threshold(img)
+    # mask = np.zeros(thresh.shape).astype(thresh.dtype)
+    # cv2.fillPoly(mask, [part_of_contour], [255, 255, 255])
+    # img = cv2.bitwise_and(img, img, mask=mask)
 
     return img

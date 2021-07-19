@@ -117,7 +117,6 @@ def aws_new(image, cnt, coord1, coord2):
     count = 0
 
     for [[cnt_x, cnt_y]] in cnt:
-        # print(coords_on_line)
         if cnt_x <= bigger_x and cnt_x >= smaller_x and cnt_y <= bigger_y and cnt_y >= smaller_y:
             count += 1
             degree_gap = abs(get_degree(np.array([cnt_x, cnt_y]), coord1) - degree)
@@ -185,7 +184,6 @@ def get_hand_form(image, mp_hands):
 
         # Convert the BGR image to RGB before processing.
         results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-        # print("results:",results.multi_handedness)
 
         if not results.multi_hand_landmarks:
             return None
