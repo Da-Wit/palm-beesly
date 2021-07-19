@@ -117,7 +117,7 @@ def get_palm(image):
     aws2 = utils.aws(img, cnt, wrist, thumb)
 
     aws3 = utils.aws_new(img, cnt, index, middle)
-    aws4 = utils.aws_new(img, cnt, middle_between_thumb_wrist, index)
+    aws4 = utils.aws(img, cnt, middle_between_thumb_wrist, index)
 
     # img = cv2.polylines(img, [cnt], True, (255, 255, 0), 1)
     # img = cv2.rectangle(img, index,middle, (255, 255, 0), 1)
@@ -143,11 +143,24 @@ def get_palm(image):
     if isFingerIndexBiggerThanHandBottomIndex:
         # part_of_contour = np.insert(part_of_contour, 0, thumb, axis=0)
         # part_of_contour = np.insert(part_of_contour, 1, wrist, axis=0)
-        part_of_contour = np.append(
-            part_of_contour, [[pinky], [ring], [middle], [index], [thumb], [aws4]], axis=0)
+        print("pinky:", pinky)
+        print("aws4:", aws4)
+
+        print("len pinky:", len(pinky))
+        print("len aws4:", len(aws4))
+        part_of_contour = np.append(part_of_contour, [[pinky]], axis=0)
+        part_of_contour = np.append(part_of_contour, [[ring]], axis=0)
+        part_of_contour = np.append(part_of_contour, [[middle]], axis=0)
+        part_of_contour = np.append(part_of_contour, [[index]], axis=0)
+        part_of_contour = np.append(part_of_contour, [[thumb]], axis=0)
+        part_of_contour = np.append(part_of_contour, [[aws4]], axis=0)
     else:
-        part_of_contour = np.append(
-            part_of_contour, [[aws4], [thumb], [index], [middle], [ring], [pinky]], axis=0)
+        part_of_contour = np.append(part_of_contour, [[aws4]], axis=0)
+        part_of_contour = np.append(part_of_contour, [[thumb]], axis=0)
+        part_of_contour = np.append(part_of_contour, [[index]], axis=0)
+        part_of_contour = np.append(part_of_contour, [[middle]], axis=0)
+        part_of_contour = np.append(part_of_contour, [[ring]], axis=0)
+        part_of_contour = np.append(part_of_contour, [[pinky]], axis=0)
 
 
     # img = cv2.polylines(img, [part_of_contour], True, (255, 255, 0), 1)

@@ -129,7 +129,7 @@ def aws_new(image, cnt, coord1, coord2):
     #     raise Exception('Length of coords_on_line is 0. Fix this function.')
     #     return -1
     min_distance = 999
-    result = np.zeros((1,2),dtype=np.int32)
+    result = np.zeros((2),dtype=np.int32)
     for coord in coords_on_line:
         distance = get_distance(coord, coord1)
         if distance < min_distance:
