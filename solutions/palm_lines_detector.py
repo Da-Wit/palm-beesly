@@ -13,13 +13,13 @@ image = utils.resize(image, height=600)
 # If you don't, invoking remove_bground function
 # may remove hand.
 image = utils.remove_bground(image)
-
+cv2.imshow("original", image)
 
 mp_palm = utils.get_palm_original(image, mp_hands, mp_drawing)
 cv2.imshow("palm_ori", mp_palm)
 
-weird_palm = something.get_palm(image)
-cv2.imshow("weird_palm", weird_palm)
+palm = something.get_palm(image)
+cv2.imshow("palm", palm)
 
 
 # hsvim = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)

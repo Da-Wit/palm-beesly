@@ -53,8 +53,6 @@ def threshold(image):
     return ret, thresh
 
 # coord1 is closer to cnt than coord2
-
-
 def aws(image, cnt, coord1, coord2):
     degree = get_degree(coord1, coord2)
     # luxk is a coordinate on a linear equation
@@ -88,6 +86,57 @@ def aws(image, cnt, coord1, coord2):
                 min_degree_gap = degree_gap
                 coord_of_min_degree_gap = np.array([cnt_x, cnt_y])
     return coord_of_min_degree_gap
+
+# coord1 is closer to cnt than coord2
+def aws_new(image, cnt, coord1, coord2):
+    degree = get_degree(coord1, coord2)
+    # luxk is a coordinate on a straight line
+    # that includes both of coord1 and coord2.
+    # Distance of luxk-coord1 and
+    # distance of coord1-coord2 are same.
+    # Also, luxk is closer to coord1 than coord2.
+    luxk = np.array([2*coord1[0]-coord2[0], 2*coord1[1]-coord2[1]])
+
+    if coord1[0] > luxk[0]:
+        bigger_x = coord1[0]
+        smaller_x = luxk[0]
+    else:
+        bigger_x = luxk[0]
+        smaller_x = coord1[0]
+
+    if coord1[1] > luxk[1]:
+        bigger_y = coord1[1]
+        smaller_y = luxk[1]
+    else:
+        bigger_y = luxk[1]
+        smaller_y = coord1[1]
+
+
+    degree_gap_criteria = 0.08
+    coords_on_line = np.zeros((0,2),dtype=np.int32)
+    count = 0
+
+    for [[cnt_x, cnt_y]] in cnt:
+        # print(coords_on_line)
+        if cnt_x <= bigger_x and cnt_x >= smaller_x and cnt_y <= bigger_y and cnt_y >= smaller_y:
+            count += 1
+            degree_gap = abs(get_degree(np.array([cnt_x, cnt_y]), coord1) - degree)
+            if degree_gap < degree_gap_criteria:
+                coords_on_line = np.append(coords_on_line,[[cnt_x,cnt_y]],axis=0)
+                # coord_of_min_degree_gap = np.array([cnt_x, cnt_y])
+
+    # if len(coords_on_line) == 0:
+    #     raise Exception('Length of coords_on_line is 0. Fix this function.')
+    #     return -1
+    min_distance = 999
+    result = np.zeros((1,2),dtype=np.int32)
+    for coord in coords_on_line:
+        distance = get_distance(coord, coord1)
+        if distance < min_distance:
+            min_distance =  distance
+            result = coord
+
+    return result
 
 
 # 제일 큰 contours를 구해주는 함수
@@ -174,10 +223,9 @@ def get_contour(image):
 def get_part_of_contour(image, contour, coord1, coord2):
     # make iterable coords tuple to execute for loop
     coords = (coord1, coord2)
-    indices_of_coords = np.zeros((2, 3), dtype=int)
+    indices_of_coords = np.zeros((2, 3), dtype=np.int32)
 
     for index in range(len(coords)):
-
         coord = coords[index]
 
         # indices having same value with coord
