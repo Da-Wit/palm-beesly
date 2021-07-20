@@ -53,6 +53,8 @@ def threshold(image):
     return ret, thresh
 
 # coord1 is closer to cnt than coord2
+
+
 def aws(image, cnt, coord1, coord2):
     degree = get_degree(coord1, coord2)
     # luxk is a coordinate on a linear equation
@@ -88,6 +90,8 @@ def aws(image, cnt, coord1, coord2):
     return coord_of_min_degree_gap
 
 # coord1 is closer to cnt than coord2
+
+
 def aws_new(image, cnt, coord1, coord2):
     degree = get_degree(coord1, coord2)
     # luxk is a coordinate on a straight line
@@ -111,28 +115,29 @@ def aws_new(image, cnt, coord1, coord2):
         bigger_y = luxk[1]
         smaller_y = coord1[1]
 
-
     degree_gap_criteria = 0.08
-    coords_on_line = np.zeros((0,2),dtype=np.int32)
+    coords_on_line = np.zeros((0, 2), dtype=np.int32)
     count = 0
 
     for [[cnt_x, cnt_y]] in cnt:
         if cnt_x <= bigger_x and cnt_x >= smaller_x and cnt_y <= bigger_y and cnt_y >= smaller_y:
             count += 1
-            degree_gap = abs(get_degree(np.array([cnt_x, cnt_y]), coord1) - degree)
+            degree_gap = abs(get_degree(
+                np.array([cnt_x, cnt_y]), coord1) - degree)
             if degree_gap < degree_gap_criteria:
-                coords_on_line = np.append(coords_on_line,[[cnt_x,cnt_y]],axis=0)
+                coords_on_line = np.append(
+                    coords_on_line, [[cnt_x, cnt_y]], axis=0)
                 # coord_of_min_degree_gap = np.array([cnt_x, cnt_y])
 
     # if len(coords_on_line) == 0:
     #     raise Exception('Length of coords_on_line is 0. Fix this function.')
     #     return -1
     min_distance = 999
-    result = np.zeros((2),dtype=np.int32)
+    result = np.zeros((2), dtype=np.int32)
     for coord in coords_on_line:
         distance = get_distance(coord, coord1)
         if distance < min_distance:
-            min_distance =  distance
+            min_distance = distance
             result = coord
 
     return result

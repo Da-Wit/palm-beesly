@@ -51,7 +51,7 @@ def get_intersection_coord_between_finger_and_palm(pip_mp, mcp_mp, img, pip_rati
     mcp = get_finger_coord(mcp_mp, pip_mp, width, height, mcp_ratio)
     X, Y = 0, 1
     binary_img = utils.adaptive_threshold(img)
-    ret, thresh = utils.threshold(img)
+    binary_img2 = cv2.line(binary_img, pip, mcp, (255, 255, 255), 10)
 
     # y1 must be bigger than y2
     y1, y2, x1, x2 = 0, 0, 0, 0
@@ -70,15 +70,27 @@ def get_coords(landmark, img):
         landmark[THUMB_MCP].x, landmark[THUMB_MCP].y, width, height)
     thumb_mid = get_finger_coord(
         landmark[THUMB_CMC], landmark[THUMB_MCP], width, height, ratio=2)
-    thumb_inside = get_finger_coord(
-        landmark[THUMB_CMC], landmark[WRIST], width, height, ratio=200)
+    thumb_inside = get_coord(
+        landmark[THUMB_CMC].x, landmark[THUMB_CMC].y, width, height)
+    # get_finger_coord(
+    #     landmark[THUMB_CMC], landmark[WRIST], width, height, ratio=200)
+    # thumb_inside = get_finger_coord(
+    #     landmark[THUMB_CMC], landmark[WRIST], width, height, ratio=200)
     wrist = get_coord(landmark[WRIST].x, landmark[WRIST].y, width, height)
     middle_between_thumb_wrist = get_coord(
         landmark[THUMB_CMC].x, landmark[THUMB_CMC].y, width, height)
 
-    pinky = get_intersection_coord_between_finger_and_palm(landmark[PINKY_PIP],
-                                                           landmark[PINKY_MCP],
-                                                           img)
+    pinky = get_finger_coord(
+        landmark[PINKY_MCP], landmark[PINKY_PIP], width, height, ratio=5)
+    ring = get_finger_coord(
+        landmark[RING_FINGER_MCP], landmark[RING_FINGER_PIP], width, height, ratio=1.5)
+    middle = get_finger_coord(
+        landmark[MIDDLE_FINGER_MCP], landmark[MIDDLE_FINGER_PIP], width, height, ratio=2.5)
+    index = get_finger_coord(
+        landmark[INDEX_FINGER_MCP], landmark[INDEX_FINGER_PIP], width, height, ratio=DFER)
+    # pinky = get_intersection_coord_between_finger_and_palm(landmark[PINKY_PIP],
+    #                                                        landmark[PINKY_MCP],
+    #                                                        img)
     ring = get_intersection_coord_between_finger_and_palm(landmark[RING_FINGER_PIP],
                                                           landmark[RING_FINGER_MCP],
                                                           img)
@@ -90,7 +102,6 @@ def get_coords(landmark, img):
                                                            img)
     index_inside = get_coord(
         landmark[INDEX_FINGER_MCP].x, landmark[INDEX_FINGER_MCP].y, width, height)
-
     return thumb_outside, thumb_mid, thumb_inside, wrist, middle_between_thumb_wrist, pinky, ring, middle, index, index_inside
 
 
@@ -123,10 +134,16 @@ def get_palm(image):
     coords = np.array([[pinky], [ring], [middle], [
                       index], [aws4], [aws5], [aws6]])
 
+    refined_coords = np.zeros((0, 1, 2), dtype=np.int32)
+    for coord in coords:
+        if(coord[0][0] != 0 and coord[0][1] != 0):
+            refined_coords = np.append(refined_coords, [coord], axis=0)
+
     if isFingerIndexBiggerThanHandBottomIndex:
-        part_of_contour = np.append(part_of_contour, coords, axis=0)
+        part_of_contour = np.append(part_of_contour, refined_coords, axis=0)
     else:
-        part_of_contour = np.append(part_of_contour, np.flipud(coords), axis=0)
+        part_of_contour = np.append(
+            part_of_contour, np.flipud(refined_coords), axis=0)
     cv2.polylines(img, [part_of_contour], True, (255, 255, 0), 2)
 
     # ret, thresh = utils.threshold(img)
