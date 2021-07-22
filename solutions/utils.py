@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
-import calculator
 
-
+# 이미지의 비율을 유지하며 높이, 너비 중 하나를 인수로 받아,
+# 적절하게 이미지 크기를 조절하는 함수입니다.
 def resize(image, width=None, height=None, inter=cv2.INTER_AREA):
     dim = None
     (h, w) = image.shape[:2]
@@ -31,6 +31,8 @@ def get_distance(coord1, coord2):
     return ((coord1[0]-coord2[0])**2 + (coord1[1]-coord2[1])**2)**(1/2)
 
 
+# 두 좌표를 인수로 받아서 그 두 좌표를 지나는 선의 기울기를 구하는 함수
+# 기울기를 구하는  분모가 0이 될 수 있어서, 분모에 1e-9(적당히 작은 값)를 더했다.
 def get_degree(coord1, coord2):
     return (coord1[1] - coord2[1])/((coord1[0] - coord2[0])+10**(-9))
 
@@ -45,16 +47,27 @@ def adaptive_threshold(image):
 
 def threshold(image):
     hsvim = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    lower = np.array([0, 48, 80], dtype="uint8")
-    upper = np.array([20, 255, 255], dtype="uint8")
+    # lower, upper 내부의 값들은 순서대로
+    # Hue(색상), Saturation(채도), Value(명도)를 의미하며,
+    # 각각의 값의 범위는 0-180, 0-255, 0-255입니다.
+    # 손바닥 인식을 위해선 이 값들을 조절하면 됩니다.
+    lower = np.array([1, 30, 120], dtype="uint8")
+    upper = np.array([20, 200, 255], dtype="uint8")
     skinRegionHSV = cv2.inRange(hsvim, lower, upper)
     blurred = cv2.blur(skinRegionHSV, (2, 2))
     ret, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY)
     return ret, thresh
 
+# coord1(좌표1)과 coord2(좌표2)를 인수로 받아서
+# 연장선(좌표1과 좌표2 사이의 거리만큼 좌표1 쪽으로
+# 연장한 선), 즉, x가 연장선 끝쪽의 점이라고 하면
+# x와 좌표1 사이의 거리와 좌표1과 좌표2 사이의 거리가
+# 같고 그 둘의 기울기또한 같다.
+# 그래서 x와 좌표1을 서로 이웃하지 않는 직사각형의
+# 점으로 놓을 때, 그 직사각형 안의 cnt 좌표들 중,
+# 가장 기울기가 좌표1, 좌표2 사이의 기울기와 가까운
+# 좌표를 반환한다.
 # coord1 is closer to cnt than coord2
-
-
 def aws(image, cnt, coord1, coord2):
     degree = get_degree(coord1, coord2)
     # luxk is a coordinate on a linear equation
@@ -91,7 +104,12 @@ def aws(image, cnt, coord1, coord2):
 
 # coord1 is closer to cnt than coord2
 
-
+# aws와 거의 유사하지만 aws는 가장 기울기 차가
+# 작은 cnt 좌표를 반환하지만 이 함수는 일정 수준
+# 보다 더 기울기 차가 작을 경우 해당하는 좌표들을
+# 모두 한 배열에 넣은 뒤, 그 배열 중 좌표1과의
+# 거리가 가장 가까운 좌표를 반환한다.
+# 하지만 aws_new는 현재 사용되지는 않는다.
 def aws_new(image, cnt, coord1, coord2):
     degree = get_degree(coord1, coord2)
     # luxk is a coordinate on a straight line
@@ -163,11 +181,12 @@ def get_max_contour(contours):
 # 손 주위 완벽히 지워지지 않고 뭔가 남을 수 있음
 def remove_bground(image):
     ret, thresh = threshold(image)
+
     # 경계선 찾음
     contours, hierarchy = cv2.findContours(
         thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    # 가장 큰 영역 찾기
 
+    # 가장 큰 영역 찾기
     maxcnt = get_max_contour(contours)
     mask = np.zeros(thresh.shape).astype(thresh.dtype)
 
@@ -176,9 +195,10 @@ def remove_bground(image):
     return cv2.bitwise_and(image, image, mask=mask)
 
 
-# mediapipe 라이브러리를 써서 손에 있는 특정 부위들의
-# 좌표값을 구해주는 함수
-# 그 좌표값들을 반환함
+# mediapipe 라이브러리를 써서 손에 있는
+# 특정 부위들의 좌표값을 반환하는 함수
+# mediapipe 라이브버리 예제는 다음 링크 참고!
+# https://google.github.io/mediapipe/solutions/hands.html
 def get_hand_form(image, mp_hands):
     with mp_hands.Hands(
             static_image_mode=True,
@@ -193,28 +213,6 @@ def get_hand_form(image, mp_hands):
         if not results.multi_hand_landmarks:
             return None
         return results.multi_hand_landmarks[0].landmark
-
-
-# mediapipe 라이브버리 예제(https://google.github.io/mediapipe/solutions/hands.html)
-# 에서 사용된 기본 손 감지 코드
-def get_palm_original(image, mp_hands, mp_drawing):
-    with mp_hands.Hands(
-            static_image_mode=True,
-            max_num_hands=1,
-            min_detection_confidence=0.5) as hands:
-        # Flip image around y-axis for correct handedness output
-        img = cv2.flip(image, 1)
-
-        # Convert the BGR image to RGB before processing.
-        results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-        if not results.multi_hand_landmarks:
-            return None
-        img = cv2.flip(img, 1)
-        for hand_landmarks in results.multi_hand_landmarks:
-            mp_drawing.draw_landmarks(
-                img, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-        return img
-
 
 def get_contour(image):
     ret, thresh = threshold(image)
@@ -248,4 +246,7 @@ def get_part_of_contour(image, contour, coord1, coord2):
 
     part_of_contour = contour[smaller_index:bigger_index+1]
 
-    return part_of_contour, isCoord1IndexBiggerThanCoord2Index
+    if isCoord1IndexBiggerThanCoord2Index != True:
+        part_of_contour = np.flipud(part_of_contour)
+
+    return part_of_contour
