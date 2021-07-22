@@ -2,12 +2,14 @@ import cv2
 import something
 import utils
 import mediapipe as mp
+import numpy as np
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 
 image_path = "some path"
 image = cv2.imread(image_path)
 image = utils.resize(image, height=600)
+img = image.copy()
 # TODO 이미지 높이에 관계없이 get_palm 함수가 동작하도록 만들기
 # 현재는 이미지 높이가 600일 경우에 최적화되어있고,
 # 테스트 또한 높이가 600일 경우에만 진행하여
@@ -41,12 +43,20 @@ sonnal, coords = something.get_palm(image)
 # # sonnal[len(sonnal)-1] : sonnal_bottom
 # cv2.circle(image, sonnal[0][0], 5, (0, 255, 0), 2)
 # cv2.circle(image, sonnal[len(sonnal)-1][0], 5, (0, 255, 0), 2)
-# image = cv2.polylines(image, [sonnal], False, (0, 255, 0), 2)
+palm = np.append(sonnal, coords, axis=0)
+# for coord in coords:
+#     palm = np.append(palm, [coord],axis=0)
+# img = cv2.polylines(img, [palm], True, (0, 255, 0), 2)
+img = cv2.polylines(img, [palm], True, (0, 255, 0), 2)
 
 
 landmarks = something.get_hand_landmark(image)
 # # landmarks는 손의 특정 구역들의 좌표를 가진 배열입니다.
 # # 예를 들어, PINKY_MCP, WRIST 등이 있습니다.
 # # landmarks 사용 예시
-# for coord in landmarks:
-#     cv2.circle(image, coord, 5, (0, 0, 255), 2)
+for coord in landmarks:
+    cv2.circle(img, coord, 5, (0, 0, 255), 2)
+
+cv2.imshow("image",img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
