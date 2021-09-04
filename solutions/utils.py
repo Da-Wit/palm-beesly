@@ -250,3 +250,9 @@ def get_part_of_contour(image, contour, coord1, coord2):
         part_of_contour = np.flipud(part_of_contour)
 
     return part_of_contour
+
+def centroid(contour):
+    M = cv2.moments(contour)
+    cX = int(M['m10'] / M['m00'])
+    cY = int(M['m01'] / M['m00'])
+    return (cX, cY)

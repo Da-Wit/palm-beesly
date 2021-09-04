@@ -92,17 +92,9 @@ def get_coords(landmark, img):
     middle_between_thumb_wrist = get_coord(
         landmark[THUMB_CMC].x, landmark[THUMB_CMC].y, width, height)
 
-    pinky = get_finger_coord(
-        landmark[PINKY_MCP], landmark[PINKY_PIP], width, height, ratio=5)
-    ring = get_finger_coord(
-        landmark[RING_FINGER_MCP], landmark[RING_FINGER_PIP], width, height, ratio=1.5)
-    middle = get_finger_coord(
-        landmark[MIDDLE_FINGER_MCP], landmark[MIDDLE_FINGER_PIP], width, height, ratio=2.5)
-    index = get_finger_coord(
-        landmark[INDEX_FINGER_MCP], landmark[INDEX_FINGER_PIP], width, height, ratio=DFER)
-    # pinky = get_intersection_coord_between_finger_and_palm(landmark[PINKY_PIP],
-    #                                                        landmark[PINKY_MCP],
-    #                                                        img)
+    pinky = get_intersection_coord_between_finger_and_palm(landmark[PINKY_PIP],
+                                                          landmark[PINKY_MCP],
+                                                          img)
     ring = get_intersection_coord_between_finger_and_palm(landmark[RING_FINGER_PIP],
                                                           landmark[RING_FINGER_MCP],
                                                           img)
@@ -136,6 +128,11 @@ def get_palm(image):
         [thumb_mid, wrist, pinky, ring, middle, index], dtype=np.int32)
 
     cnt = utils.get_contour(img)
+    img2 = image.copy()
+    img2 = cv2.polylines(img2, [cnt], True, (255, 0, 0), 2)
+    cv2.imwrite("maxcnt.png",img2)
+
+
 
     sonnal_top = utils.aws(img, cnt, pinky, ring)
     sonnal_bottom = utils.aws(img, cnt, wrist, thumb_mid)
