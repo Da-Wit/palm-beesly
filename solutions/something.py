@@ -130,7 +130,6 @@ def get_palm(image):
     cnt = utils.get_contour(img)
     img2 = image.copy()
     img2 = cv2.polylines(img2, [cnt], True, (255, 0, 0), 2)
-    cv2.imwrite("maxcnt.png",img2)
 
 
 
