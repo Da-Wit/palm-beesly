@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import math
 
 # 이미지의 비율을 유지하며 높이, 너비 중 하나를 인수로 받아,
 # 적절하게 이미지 크기를 조절하는 함수입니다.
@@ -251,8 +252,69 @@ def get_part_of_contour(image, contour, coord1, coord2):
 
     return part_of_contour
 
-def centroid(contour):
-    M = cv2.moments(contour)
+def center(points):
+    M = cv2.moments(points)
     cX = int(M['m10'] / M['m00'])
     cY = int(M['m01'] / M['m00'])
-    return (cX, cY)
+    return [cX, cY]
+
+
+def getAngle(start, end):
+    start_x, start_y = start
+    end_x, end_y = end
+
+    d_y = end_y-start_y;
+    d_x = end_x-start_x;
+    angle = math.atan(d_y/d_x) * (180.0/math.pi)
+
+    if d_x < 0.0 :
+        angle += 180.0
+    elif d_y<0.0:
+        angle += 360.0
+    return angle
+
+
+def rotateAndScale(img, scaleFactor = 0.5, degreesCCW = 30):
+    (oldY,oldX) = img.shape #note: numpy uses (y,x) convention but most OpenCV functions use (x,y)
+    M = cv2.getRotationMatrix2D(center=(oldX/2,oldY/2), angle=degreesCCW, scale=scaleFactor) #rotate about center of image.
+
+    #choose a new image size.
+    newX,newY = oldX*scaleFactor,oldY*scaleFactor
+    #include this if you want to prevent corners being cut off
+    r = np.deg2rad(degreesCCW)
+    newX,newY = (abs(np.sin(r)*newY) + abs(np.cos(r)*newX),abs(np.sin(r)*newX) + abs(np.cos(r)*newY))
+
+    #the warpAffine function call, below, basically works like this:
+    # 1. apply the M transformation on each pixel of the original image
+    # 2. save everything that falls within the upper-left "dsize" portion of the resulting image.
+
+    #So I will find the translation that moves the result to the center of that region.
+    (tx,ty) = ((newX-oldX)/2,(newY-oldY)/2)
+
+    M[0,2] += tx #third column of matrix holds translation, which takes effect after rotation.
+    M[1,2] += ty
+
+    print("M",M)
+
+
+    rotatedImg = cv2.warpAffine(img, M, dsize=(int(newX),int(newY)))
+    return rotatedImg
+
+
+def angle3pt(a, b, c):
+    """Counterclockwise angle in degrees by turning from a to c around b
+        Returns a float between 0.0 and 360.0"""
+    ang = math.degrees(
+        math.atan2(c[1]-b[1], c[0]-b[0]) - math.atan2(a[1]-b[1], a[0]-b[0]))
+    return ang + 360 if ang < 0 else ang
+
+def rotate_point(point, pivot, degree):
+    deg = (math.pi/180)*degree
+    x1, y1 = point
+    x0, y0 = pivot
+    x2 = round(((x1 - x0) * math.cos(deg)) - ((y1 - y0) * math.sin(deg)) + x0)
+    y2 = round(((x1 - x0) * math.sin(deg)) + ((y1 - y0) * math.cos(deg)) + y0)
+    return (x2, y2)
+
+# def clockPosition(angle):
+#     return round(angle/30) % 12
