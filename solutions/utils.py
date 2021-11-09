@@ -27,7 +27,7 @@ def canny(image):
     denoised = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
     equalized = cv2.equalizeHist(denoised)
     blur = cv2.GaussianBlur(equalized, (9, 9), 0)
-    return cv2.Canny(blur, 10, 120, apertureSize=3)
+    return cv2.Canny(blur, threshold1=100, threshold2=200)
 
 
 def get_distance(coord1, coord2):

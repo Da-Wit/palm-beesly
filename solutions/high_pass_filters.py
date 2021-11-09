@@ -8,20 +8,34 @@ import utils
 #
 # [DONE] TODO understand and document about high pass filter
 # [DONE] TODO implement sobel filter
-# [DONE] TODO (optional) implement adjustable sobel filter
+# [DONE] TODO implement Canny
+# TODO (optional) implement adjustable sobel filter
 # TODO understand and document about sobel filter
-# TODO implement Canny
 # TODO understand and document about Canny
 # TODO (optional) implement adjustable Canny
 
 
-# sobel filter
 def using_sobel():
     image_path = f"C:/Users/USER/workspace/palm/images/sample{2}.png"
     img = cv2.imread(image_path)
 
     sobel = utils.sobel(img)
-    cv2.imshow("utils sobel", sobel)
+    cv2.imshow("sobel", sobel)
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+
+def using_canny():
+    image_path = f"C:/Users/USER/workspace/palm/images/sample{2}.png"
+    img = cv2.imread(image_path)
+
+    canny = utils.canny(img)
+    cv2.imshow("canny", canny)
+
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+
+using_sobel()
+using_canny()
