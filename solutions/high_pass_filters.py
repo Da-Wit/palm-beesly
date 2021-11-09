@@ -12,7 +12,7 @@ import utils
 # TODO (optional) implement adjustable sobel filter
 # TODO understand and document about sobel filter
 # TODO understand and document about Canny
-# TODO (optional) implement adjustable Canny
+# [DONE] TODO (optional) implement adjustable Canny
 
 
 def using_sobel():

@@ -27,7 +27,9 @@ def canny(image):
     denoised = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
     equalized = cv2.equalizeHist(denoised)
     blur = cv2.GaussianBlur(equalized, (9, 9), 0)
-    return cv2.Canny(blur, threshold1=100, threshold2=200)
+    min_thresholding = 100
+    max_thresholding = 200
+    return cv2.Canny(blur, threshold1=min_thresholding, threshold2=max_thresholding)
 
 
 def get_distance(coord1, coord2):
@@ -36,6 +38,8 @@ def get_distance(coord1, coord2):
 
 # 두 좌표를 인수로 받아서 그 두 좌표를 지나는 선의 기울기를 구하는 함수
 # 기울기를 구하는  분모가 0이 될 수 있어서, 분모에 1e-9(적당히 작은 값)를 더했다.
+
+
 def get_degree(coord1, coord2):
     return (coord1[1] - coord2[1]) / ((coord1[0] - coord2[0]) + 10**(-9))
 
