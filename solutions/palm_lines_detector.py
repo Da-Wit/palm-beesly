@@ -10,7 +10,8 @@ number_of_sample_images = 44
 
 # 이미지 샘플 개수만큼 for문을 돈다
 for i in range(number_of_sample_images):
-    image_path = f"C:/Users/USER/workspace/palm/images/sample{i}.png"
+    image_path = f"C:/Users/USER/workspace/palm/images/sample{2}.png"
+    # image_path = f"C:/Users/USER/workspace/palm/images/sample{25}.png"
     image = cv2.imread(image_path)
 
     # 이미지가 제대로 불러와지지 않으면 에러 출력하고 다음 숫자로 넘어감
@@ -41,7 +42,6 @@ for i in range(number_of_sample_images):
     landmarks = np.array(using_mp.get_hand_landmark(img))
 
     boundingRect = cv2.boundingRect(landmarks)
-    # cv2.rectangle(img, boundingRect, (0, 0, 255), 3)
     x1, y1, x2, y2 = boundingRect
     # cv2.circle(img, (x1+ round(x2/2), y1), 5, (255, 255, 0), 10)
 
@@ -55,29 +55,46 @@ for i in range(number_of_sample_images):
                                     landmarks[17],  # PINKY_MCP
                                     ])
 
-    pivot = utils.center(palm_except_fingers)
+    nucleus = utils.center(palm_except_fingers)
 
-    pts = np.array([wrist, pivot], np.int32)
+    pts = np.array([wrist, nucleus], np.int32)
 
     # cv2.circle(img, wrist, 5, (0, 0, 255), 2)
-    cv2.circle(img, pivot, 5, (0, 0, 255), 2)
+    cv2.circle(img, nucleus, 1, (255, 255, 255), 5)
+    cv2.circle(img, nucleus, 5, (0, 0, 255), 2)
+
+    cv2.rectangle(img, boundingRect, (255, 0, 0), 3)
+    # 손의 특정 좌표들을 화면에 표시
+
+    # All landmarks iteration
+    for coord in landmarks:
+        cv2.circle(img, coord, 1, (255, 255, 255), 4)
+        cv2.circle(img, coord, 4, (0, 0, 0), 2)
+
+    # palm_except_fingers iteration
+    for coord in palm_except_fingers:
+        cv2.circle(img, coord, 1, (255, 255, 255), 4)
+        cv2.circle(img, coord, 4, (0, 255, 0), 2)
 
     cv2.imshow(f"image{i} original", img)
-    # cv2.circle(img, (pivot[0], pivot[1] + 10), 5, (0, 0, 255), 2)
+    # cv2.circle(img, (nucleus[0], nucleus[1] + 10), 5, (0, 0, 255), 2)
 
-    degree_to_rotate = utils.getAngle(pivot, wrist) - 90
+    degree_to_rotate = utils.getAngle(nucleus, wrist) - 90
+
+    print(degree_to_rotate + 90)
 
     left_top = (0, 0)
     right_top = (width - 1, 0)
     left_bottom = (0, height - 1)
     right_bottom = (width - 1, height - 1)
 
-    rotated_left_top = utils.rotate_point(left_top, pivot, -degree_to_rotate)
-    rotated_right_top = utils.rotate_point(right_top, pivot, -degree_to_rotate)
+    rotated_left_top = utils.rotate_point(left_top, nucleus, -degree_to_rotate)
+    rotated_right_top = utils.rotate_point(
+        right_top, nucleus, -degree_to_rotate)
     rotated_left_bottom = utils.rotate_point(
-        left_bottom, pivot, -degree_to_rotate)
+        left_bottom, nucleus, -degree_to_rotate)
     rotated_right_bottom = utils.rotate_point(
-        right_bottom, pivot, -degree_to_rotate)
+        right_bottom, nucleus, -degree_to_rotate)
 
     min_x, max_x, _, _ = cv2.minMaxLoc(np.array([rotated_left_top[0],
                                                 rotated_right_top[0],
@@ -95,7 +112,7 @@ for i in range(number_of_sample_images):
     # cv2.putText(img, f"{angle}", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255))
     # pts = pts.reshape((-1, 1, 2));
 
-    M = cv2.getRotationMatrix2D(pivot, degree_to_rotate, 1.0)
+    M = cv2.getRotationMatrix2D(nucleus, degree_to_rotate, 1.0)
 
     top_border_size = min_y * -1 if min_y < 0 else 0
     bottom_border_size = max_y - width if max_y - width > 0 else 0
@@ -115,7 +132,7 @@ for i in range(number_of_sample_images):
         value=[0, 0, 255]
     )
 
-    cv2.imshow("extended img", img)
+    # cv2.imshow("extended img", img)
 
     # rotated_img = cv2.CreateMat(rotated_height, rotated_width, )
     img = cv2.warpAffine(img, M, (rotated_width, rotated_height))
@@ -135,11 +152,7 @@ for i in range(number_of_sample_images):
     #                1, (0,255,0), 2, cv2.LINE_AA)
     # img = cv2.polylines(img, [pts], False, (0, 255, 0), 2)
 
-    # 손의 특정 좌표들을 화면에 표시
-    # for coord in landmarks:
-    #     cv2.circle(img, coord, 5, (0, 0, 255), 2)
-
-    cv2.imshow(f"image{i}", img)
+    # cv2.imshow(f"image{i}", img)
 
     k = cv2.waitKey(0)
     cv2.destroyAllWindows()

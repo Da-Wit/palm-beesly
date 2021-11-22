@@ -21,17 +21,6 @@ def resize(image, width=None, height=None, inter=cv2.INTER_AREA):
     return cv2.resize(image, dim, interpolation=inter)
 
 
-def canny(image):
-    img = image.copy()
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    denoised = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
-    equalized = cv2.equalizeHist(denoised)
-    blur = cv2.GaussianBlur(equalized, (9, 9), 0)
-    min_thresholding = 100
-    max_thresholding = 200
-    return cv2.Canny(blur, threshold1=min_thresholding, threshold2=max_thresholding)
-
-
 def get_distance(coord1, coord2):
     return ((coord1[0] - coord2[0])**2 + (coord1[1] - coord2[1])**2)**(1 / 2)
 
@@ -332,22 +321,6 @@ def rotate_point(point, pivot, degree):
     x2 = round(((x1 - x0) * math.cos(deg)) - ((y1 - y0) * math.sin(deg)) + x0)
     y2 = round(((x1 - x0) * math.sin(deg)) + ((y1 - y0) * math.cos(deg)) + y0)
     return (x2, y2)
-
-
-def sobel(img):
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    img_sobel_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
-    img_sobel_x = cv2.convertScaleAbs(img_sobel_x)
-
-    img_sobel_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
-    img_sobel_y = cv2.convertScaleAbs(img_sobel_y)
-
-    # If you decrease the value of weight like 0.5, sub-lines would
-    # be removed. If decrease, it increase and hard to notice main lines.
-    default_weight = 1
-    img_sobel = cv2.addWeighted(
-        img_sobel_x, default_weight, img_sobel_y, default_weight, 0)
-    return img_sobel
 
 
 def custom_sobel(im, xKernel, yKernel):
