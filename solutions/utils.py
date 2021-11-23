@@ -4,6 +4,8 @@ import math
 
 # 이미지의 비율을 유지하며 높이, 너비 중 하나를 인수로 받아,
 # 적절하게 이미지 크기를 조절하는 함수입니다.
+
+
 def resize(image, width=None, height=None, inter=cv2.INTER_AREA):
     dim = None
     (h, w) = image.shape[:2]
@@ -19,23 +21,16 @@ def resize(image, width=None, height=None, inter=cv2.INTER_AREA):
     return cv2.resize(image, dim, interpolation=inter)
 
 
-def canny(image):
-    img = image.copy()
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    denoised = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
-    equalized = cv2.equalizeHist(denoised)
-    blur = cv2.GaussianBlur(equalized, (9, 9), 0)
-    return cv2.Canny(blur, 10, 120, apertureSize=3)
-
-
 def get_distance(coord1, coord2):
-    return ((coord1[0]-coord2[0])**2 + (coord1[1]-coord2[1])**2)**(1/2)
+    return ((coord1[0] - coord2[0])**2 + (coord1[1] - coord2[1])**2)**(1 / 2)
 
 
 # 두 좌표를 인수로 받아서 그 두 좌표를 지나는 선의 기울기를 구하는 함수
 # 기울기를 구하는  분모가 0이 될 수 있어서, 분모에 1e-9(적당히 작은 값)를 더했다.
+
+
 def get_degree(coord1, coord2):
-    return (coord1[1] - coord2[1])/((coord1[0] - coord2[0])+10**(-9))
+    return (coord1[1] - coord2[1]) / ((coord1[0] - coord2[0]) + 10**(-9))
 
 
 def adaptive_threshold(image):
@@ -69,6 +64,8 @@ def threshold(image):
 # 가장 기울기가 좌표1, 좌표2 사이의 기울기와 가까운
 # 좌표를 반환한다.
 # coord1 is closer to cnt than coord2
+
+
 def aws(image, cnt, coord1, coord2):
     degree = get_degree(coord1, coord2)
     # luxk is a coordinate on a linear equation
@@ -76,7 +73,7 @@ def aws(image, cnt, coord1, coord2):
     # Distance of luxk-coord1 and
     # distance of coord1-coord2 are same.
     # Also, luxk is closer to coord1 than coord2.
-    luxk = np.array([2*coord1[0]-coord2[0], 2*coord1[1]-coord2[1]])
+    luxk = np.array([2 * coord1[0] - coord2[0], 2 * coord1[1] - coord2[1]])
 
     if coord1[0] > luxk[0]:
         bigger_x = coord1[0]
@@ -111,6 +108,8 @@ def aws(image, cnt, coord1, coord2):
 # 모두 한 배열에 넣은 뒤, 그 배열 중 좌표1과의
 # 거리가 가장 가까운 좌표를 반환한다.
 # 하지만 aws_new는 현재 사용되지는 않는다.
+
+
 def aws_new(image, cnt, coord1, coord2):
     degree = get_degree(coord1, coord2)
     # luxk is a coordinate on a straight line
@@ -118,7 +117,7 @@ def aws_new(image, cnt, coord1, coord2):
     # Distance of luxk-coord1 and
     # distance of coord1-coord2 are same.
     # Also, luxk is closer to coord1 than coord2.
-    luxk = np.array([2*coord1[0]-coord2[0], 2*coord1[1]-coord2[1]])
+    luxk = np.array([2 * coord1[0] - coord2[0], 2 * coord1[1] - coord2[1]])
 
     if coord1[0] > luxk[0]:
         bigger_x = coord1[0]
@@ -215,6 +214,7 @@ def get_hand_form(image, mp_hands):
             return None
         return results.multi_hand_landmarks[0].landmark
 
+
 def get_contour(image):
     ret, thresh = threshold(image)
     contours, hierarchy = cv2.findContours(
@@ -245,12 +245,13 @@ def get_part_of_contour(image, contour, coord1, coord2):
         bigger_index = indices_of_coords[0][0]
         isCoord1IndexBiggerThanCoord2Index = True
 
-    part_of_contour = contour[smaller_index:bigger_index+1]
+    part_of_contour = contour[smaller_index:bigger_index + 1]
 
     if isCoord1IndexBiggerThanCoord2Index != True:
         part_of_contour = np.flipud(part_of_contour)
 
     return part_of_contour
+
 
 def center(points):
     M = cv2.moments(points)
@@ -263,41 +264,45 @@ def getAngle(start, end):
     start_x, start_y = start
     end_x, end_y = end
 
-    d_y = end_y-start_y;
-    d_x = end_x-start_x;
-    angle = math.atan(d_y/d_x) * (180.0/math.pi)
+    d_y = end_y - start_y
+    d_x = end_x - start_x
+    angle = math.atan(d_y / d_x) * (180.0 / math.pi)
 
-    if d_x < 0.0 :
+    if d_x < 0.0:
         angle += 180.0
-    elif d_y<0.0:
+    elif d_y < 0.0:
         angle += 360.0
     return angle
 
 
-def rotateAndScale(img, scaleFactor = 0.5, degreesCCW = 30):
-    (oldY,oldX) = img.shape #note: numpy uses (y,x) convention but most OpenCV functions use (x,y)
-    M = cv2.getRotationMatrix2D(center=(oldX/2,oldY/2), angle=degreesCCW, scale=scaleFactor) #rotate about center of image.
+def rotateAndScale(img, scaleFactor=0.5, degreesCCW=30):
+    # note: numpy uses (y,x) convention but most OpenCV functions use (x,y)
+    (oldY, oldX) = img.shape
+    # rotate about center of image.
+    M = cv2.getRotationMatrix2D(
+        center=(oldX / 2, oldY / 2), angle=degreesCCW, scale=scaleFactor)
 
-    #choose a new image size.
-    newX,newY = oldX*scaleFactor,oldY*scaleFactor
-    #include this if you want to prevent corners being cut off
+    # choose a new image size.
+    newX, newY = oldX * scaleFactor, oldY * scaleFactor
+    # include this if you want to prevent corners being cut off
     r = np.deg2rad(degreesCCW)
-    newX,newY = (abs(np.sin(r)*newY) + abs(np.cos(r)*newX),abs(np.sin(r)*newX) + abs(np.cos(r)*newY))
+    newX, newY = (abs(np.sin(r) * newY) + abs(np.cos(r) * newX),
+                  abs(np.sin(r) * newX) + abs(np.cos(r) * newY))
 
-    #the warpAffine function call, below, basically works like this:
+    # the warpAffine function call, below, basically works like this:
     # 1. apply the M transformation on each pixel of the original image
     # 2. save everything that falls within the upper-left "dsize" portion of the resulting image.
 
-    #So I will find the translation that moves the result to the center of that region.
-    (tx,ty) = ((newX-oldX)/2,(newY-oldY)/2)
+    # So I will find the translation that moves the result to the center of that region.
+    (tx, ty) = ((newX - oldX) / 2, (newY - oldY) / 2)
 
-    M[0,2] += tx #third column of matrix holds translation, which takes effect after rotation.
-    M[1,2] += ty
+    # third column of matrix holds translation, which takes effect after rotation.
+    M[0, 2] += tx
+    M[1, 2] += ty
 
-    print("M",M)
+    print("M", M)
 
-
-    rotatedImg = cv2.warpAffine(img, M, dsize=(int(newX),int(newY)))
+    rotatedImg = cv2.warpAffine(img, M, dsize=(int(newX), int(newY)))
     return rotatedImg
 
 
@@ -305,16 +310,37 @@ def angle3pt(a, b, c):
     """Counterclockwise angle in degrees by turning from a to c around b
         Returns a float between 0.0 and 360.0"""
     ang = math.degrees(
-        math.atan2(c[1]-b[1], c[0]-b[0]) - math.atan2(a[1]-b[1], a[0]-b[0]))
+        math.atan2(c[1] - b[1], c[0] - b[0]) - math.atan2(a[1] - b[1], a[0] - b[0]))
     return ang + 360 if ang < 0 else ang
 
+
 def rotate_point(point, pivot, degree):
-    deg = (math.pi/180)*degree
+    deg = (math.pi / 180) * degree
     x1, y1 = point
     x0, y0 = pivot
     x2 = round(((x1 - x0) * math.cos(deg)) - ((y1 - y0) * math.sin(deg)) + x0)
     y2 = round(((x1 - x0) * math.sin(deg)) + ((y1 - y0) * math.cos(deg)) + y0)
     return (x2, y2)
 
-# def clockPosition(angle):
-#     return round(angle/30) % 12
+
+def custom_sobel(im, xKernel, yKernel):
+    # This function is incomplete. Do not use it.
+
+    # # // Call using built-in Sobel
+
+    # out1 = cv2.convertScaleAbs(out1.copy())
+
+    # // Create custom kernel
+    # xVals = np.array([0.125, 0, -0.125, 0.25, 0, -0.25,
+    #                  0.125, 0, -0.125]).reshape(3, 3)
+
+    xFiltered = cv2.filter2D(im, -1, xKernel, None,
+                             (-1, -1), 0, cv2.BORDER_DEFAULT)
+    xFiltered = cv2.convertScaleAbs(xFiltered.copy())
+
+    yFiltered = cv2.filter2D(im, -1, yKernel, None,
+                             (-1, -1), 0, cv2.BORDER_DEFAULT)
+    yFiltered = cv2.convertScaleAbs(yFiltered.copy())
+
+    img_sobel = cv2.addWeighted(xFiltered, 1, yFiltered, 1, 0)
+    return img_sobel
