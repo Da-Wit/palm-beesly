@@ -1,6 +1,6 @@
 import cv2
-import numpy as np
 import enum
+import numpy as np
 
 # 구현 할 때 사용한 스펙
 # cv2 버젼(cv2.__version__) -> 4.5.2
@@ -57,16 +57,16 @@ HPF_kernel = {
         [-10, -20, 0, 20, 10],
         [-8, -10, 0, 10, 8],
         [-5, -4, 0, 4, 5]]) / 20,
-        Y: np.array([
-            [-5, -8, -10, -8, -5],
-            [-4, -10, -20, -10, -4],
-            [0, 0, 0, 0, 0],
-            [4, 10, 20, 10, 4],
-            [5, 8, 10, 8, 5]
-        ]) / 20,
-        MAX_ALPHA: max_sobel_alpha,
-        DIVIDER: sobel_divider
-    },
+                     Y: np.array([
+                         [-5, -8, -10, -8, -5],
+                         [-4, -10, -20, -10, -4],
+                         [0, 0, 0, 0, 0],
+                         [4, 10, 20, 10, 4],
+                         [5, 8, 10, 8, 5]
+                     ]) / 20,
+                     MAX_ALPHA: max_sobel_alpha,
+                     DIVIDER: sobel_divider
+                     },
     HPF_type.SB7X7: {X: np.array([
         [-3 / 18, -2 / 13, -1 / 10, 0, 1 / 10, 2 / 13, 3 / 18],
         [-3 / 13, -2 / 8, -1 / 5, 0, 1 / 5, 2 / 8, 3 / 13],
@@ -75,7 +75,7 @@ HPF_kernel = {
         [-3 / 10, -2 / 5, -1 / 2, 0, 1 / 2, 2 / 5, 3 / 10],
         [-3 / 13, -2 / 8, -1 / 5, 0, 1 / 5, 2 / 8, 3 / 13],
         [-3 / 18, -2 / 13, -1 / 10, 0, 1 / 10, 2 / 13, 3 / 18]]),
-        Y:  np.array([
+        Y: np.array([
             [-3 / 18, -3 / 13, -3 / 10, -3 / 9, -3 / 10, -3 / 13, -3 / 18],
             [-2 / 13, -2 / 8, -2 / 5, -2 / 4, -2 / 5, -2 / 8, -2 / 13],
             [-1 / 10, -1 / 5, -1 / 2, -1 / 1, -1 / 2, -1 / 5, -1 / 10],
@@ -103,15 +103,15 @@ HPF_kernel = {
         [-3, -6, 0, 6, 3],
         [-2, -2, 0, 2, 2],
         [-1, -1, 0, 1, 1]]) / 60,
-        Y: np.array([
-            [-1, -2, -3, -2, -1],
-            [-1, -2, -6, -2, -1],
-            [0, 0, 0, 0, 0],
-            [1, 2, 6, 2, 1],
-            [1, 2, 3, 2, 1]
-        ]) / 60,
-        MAX_ALPHA: max_scharr_alpha,
-        DIVIDER: scharr_divider},
+                     Y: np.array([
+                         [-1, -2, -3, -2, -1],
+                         [-1, -2, -6, -2, -1],
+                         [0, 0, 0, 0, 0],
+                         [1, 2, 6, 2, 1],
+                         [1, 2, 3, 2, 1]
+                     ]) / 60,
+                     MAX_ALPHA: max_scharr_alpha,
+                     DIVIDER: scharr_divider},
 }
 
 
@@ -220,7 +220,6 @@ sb3x3 = HPF(HPF_type.SB3X3, alpha=500, gaussian=1).process(img)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
-
 inputImageGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 empty = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 empty *= 0
@@ -232,7 +231,7 @@ lines = cv2.HoughLinesP(edges, cv2.HOUGH_PROBABILISTIC,
 for x in range(0, len(lines)):
     print(lines[x])
     for x1, y1, x2, y2 in lines[x]:
-        #cv2.line(img,(x1,y1),(x2,y2),(0,128,0),2, cv2.LINE_AA)
+        # cv2.line(img,(x1,y1),(x2,y2),(0,128,0),2, cv2.LINE_AA)
         pts = np.array([[x1, y1], [x2, y2]], np.int32)
         cv2.polylines(empty, [pts], True, (255, 255, 255))
 

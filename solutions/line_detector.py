@@ -1,8 +1,10 @@
 import cv2
-import using_mp
-import utils
 import mediapipe as mp
 import numpy as np
+
+import using_mp
+import utils
+
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 
@@ -48,9 +50,9 @@ for i in range(number_of_sample_images):
     wrist = [landmarks[0][0], landmarks[0][1]]
     # 손바닥 중심
 
-    palm_except_fingers = np.array([landmarks[0],   # WRIST
-                                    landmarks[5],   # INDEX_FINGER_MCP
-                                    landmarks[9],   # MIDDLE_FINGER_MCP
+    palm_except_fingers = np.array([landmarks[0],  # WRIST
+                                    landmarks[5],  # INDEX_FINGER_MCP
+                                    landmarks[9],  # MIDDLE_FINGER_MCP
                                     landmarks[13],  # RING_FINGER_MCP
                                     landmarks[17],  # PINKY_MCP
                                     ])
@@ -97,15 +99,15 @@ for i in range(number_of_sample_images):
         right_bottom, nucleus, -degree_to_rotate)
 
     min_x, max_x, _, _ = cv2.minMaxLoc(np.array([rotated_left_top[0],
-                                                rotated_right_top[0],
-                                                rotated_left_bottom[0],
-                                                rotated_right_bottom[0],
+                                                 rotated_right_top[0],
+                                                 rotated_left_bottom[0],
+                                                 rotated_right_bottom[0],
                                                  ]))
 
     min_y, max_y, _, _ = cv2.minMaxLoc(np.array([rotated_left_top[1],
-                                                rotated_right_top[1],
-                                                rotated_left_bottom[1],
-                                                rotated_right_bottom[1],
+                                                 rotated_right_top[1],
+                                                 rotated_left_bottom[1],
+                                                 rotated_right_bottom[1],
                                                  ]))
     rotated_width, rotated_height = round(max_x - min_x), round(max_y - min_y)
 
@@ -157,7 +159,7 @@ for i in range(number_of_sample_images):
     k = cv2.waitKey(0)
     cv2.destroyAllWindows()
     # for문 도중 Esc를 누르면 프로그램이 종료되게 함
-    if k == 27:    # Esc key to stop
+    if k == 27:  # Esc key to stop
         break
     elif k == -1:  # normally -1 returned,so don't print it
         continue

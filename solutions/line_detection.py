@@ -1,6 +1,6 @@
-from hline import *
 import copy
 
+from hline import *
 
 image_path = "C:/Users/USER/Downloads/edit4.png"
 # image_path = f"C:/Users/USER/workspace/palm/images/sample{2}.2.png"
@@ -15,7 +15,6 @@ img3 = copy.deepcopy(img)
 h, w, c = img.shape
 nline = []  # 가로 선 나올때마다 추가됨
 nline2 = []  # 세로 선 나올때마다 추가됨
-
 
 # 맨 처음 for 문 도는데 처음이 선임
 # 맨 처음 for 문 도는데 처음이 선이 아님

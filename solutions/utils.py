@@ -1,6 +1,7 @@
 import cv2
-import numpy as np
 import math
+import numpy as np
+
 
 # 이미지의 비율을 유지하며 높이, 너비 중 하나를 인수로 받아,
 # 적절하게 이미지 크기를 조절하는 함수입니다.
@@ -22,7 +23,7 @@ def resize(image, width=None, height=None, inter=cv2.INTER_AREA):
 
 
 def get_distance(coord1, coord2):
-    return ((coord1[0] - coord2[0])**2 + (coord1[1] - coord2[1])**2)**(1 / 2)
+    return ((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2) ** (1 / 2)
 
 
 # 두 좌표를 인수로 받아서 그 두 좌표를 지나는 선의 기울기를 구하는 함수
@@ -30,7 +31,7 @@ def get_distance(coord1, coord2):
 
 
 def get_degree(coord1, coord2):
-    return (coord1[1] - coord2[1]) / ((coord1[0] - coord2[0]) + 10**(-9))
+    return (coord1[1] - coord2[1]) / ((coord1[0] - coord2[0]) + 10 ** (-9))
 
 
 def adaptive_threshold(image):
@@ -53,6 +54,7 @@ def threshold(image):
     blurred = cv2.blur(skinRegionHSV, (2, 2))
     ret, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY)
     return ret, thresh
+
 
 # coord1(좌표1)과 coord2(좌표2)를 인수로 받아서
 # 연장선(좌표1과 좌표2 사이의 거리만큼 좌표1 쪽으로
@@ -99,6 +101,7 @@ def aws(image, cnt, coord1, coord2):
                 min_degree_gap = degree_gap
                 coord_of_min_degree_gap = np.array([cnt_x, cnt_y])
     return coord_of_min_degree_gap
+
 
 # coord1 is closer to cnt than coord2
 
@@ -170,7 +173,7 @@ def get_max_contour(contours):
     maxcnt = None
     for cnt in contours:
         area = cv2.contourArea(cnt)
-        if(max < area):
+        if (max < area):
             max = area
             maxcnt = cnt
     return maxcnt
