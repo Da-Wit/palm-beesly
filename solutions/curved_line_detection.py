@@ -1,18 +1,15 @@
 import copy
-
+import cv2
 from hline import *
 
 image_path = "C:/Users/USER/Downloads/edit4.png"
 # image_path = f"C:/Users/USER/workspace/palm/images/sample{2}.2.png"
-img = cv2.imread(image_path)
-# img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-# img = cv2.Canny(img, 150, 200, apertureSize=3)
-# img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
 cv2.imshow("ORIGINAL", img)
 img2 = copy.deepcopy(img)
 img3 = copy.deepcopy(img)
-h, w, c = img.shape
+h, w = img.shape[:2]
 nline = []  # 가로 선 나올때마다 추가됨
 nline2 = []  # 세로 선 나올때마다 추가됨
 
@@ -31,15 +28,15 @@ for i in range(0, w - 1):
 
     for j in range(0, h - 1):
         # print("j:", j)
-        img2[j][i] = [0, 0, 0]
-        img3[j][i] = [0, 0, 0]
-        if img[j][i][0] != 255 and find == False:
+        img2[j][i] = 0
+        img3[j][i] = 0
+        if img[j][i] != 255 and find is False:
             find = True
-            if setLineInfo(nline, img, i, j) == True:
+            if set_line_info(nline, i, j) is True:
                 print(",", i, j, end='')  # 기존선에 점추가
             else:
                 print("\n새로운선[", i, j, "]")  # 새로운 선 발견
-        if img[j][i][0] == 255 and find == True:
+        if img[j][i] == 255 and find is True:
             find = False
 
 for i in nline[:]:
@@ -56,10 +53,10 @@ for n in nline:
 for j in range(0, h - 1):
     find = 0
     for i in range(0, w - 1):
-        if img[j][i][0] != 255 and find == 0:
+        if img[j][i] != 255 and find == 0:
             find = 1
-            setLineInfo(nline2, img, i, j)
-        if img[j][i][0] == 255 and find == 1:
+            set_line_info(nline2, i, j)
+        if img[j][i] == 255 and find == 1:
             find = 0
 
 for i in nline2[:]:
@@ -72,26 +69,30 @@ print("세로방향 ", len(nline2), " 개")
 
 for i in nline:
     for k in i.pointlist:
-        img2[k[1]][k[0]] = [80, 80, 80]
+        img2[k[1]][k[0]] = 80
 for i in nline:
-    img2[i.pointlist[0][1]][i.pointlist[0][0]] = [0, 255, 255]
-    img2[i.pointlist[-1][1]][i.pointlist[-1][0]] = [255, 0, 255]
+    # img2[i.pointlist[0][1]][i.pointlist[0][0]] = [0, 255, 255]
+    # img2[i.pointlist[-1][1]][i.pointlist[-1][0]] = [255, 0, 255]
+    img2[i.pointlist[0][1]][i.pointlist[0][0]] = 127
+    img2[i.pointlist[-1][1]][i.pointlist[-1][0]] = 127
 
 for i in nline2:
     for k in i.pointlist:
-        img3[k[1]][k[0]] = [80, 80, 80]
+        img3[k[1]][k[0]] = 80
 for i in nline2:
-    img3[i.pointlist[0][1]][i.pointlist[0][0]] = [0, 255, 255]
-    img3[i.pointlist[-1][1]][i.pointlist[-1][0]] = [255, 0, 255]
+    # img3[i.pointlist[0][1]][i.pointlist[0][0]] = [0, 255, 255]
+    # img3[i.pointlist[-1][1]][i.pointlist[-1][0]] = [255, 0, 255]
+    img3[i.pointlist[0][1]][i.pointlist[0][0]] = 127
+    img3[i.pointlist[-1][1]][i.pointlist[-1][0]] = 127
 
 print("0라인값")
 # for k in nline[0].pointlist :
 #    print(k[0],k[1])
 
 
-cv2.imshow("vertical", img3 * 255)
-cv2.imshow("horizontal", img2 * 255)
-cv2.imshow("RESULT", img2 * 255 + img3 * 255)
+cv2.imshow("vertical", img3)
+cv2.imshow("horizontal", img2)
+cv2.imshow("RESULT", img2 + img3)
 # cv2.imshow("horizontal", img2)
 # cv2.imshow("RESULT", img2 + img3)
 
