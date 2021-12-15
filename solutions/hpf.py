@@ -124,7 +124,7 @@ class HPF:
 
         self.kernel = HPF_kernel[filter_type]
 
-        alpha_checker = self.check_alpha(alpha, filter_type)
+        alpha_checker = self.check_alpha(alpha)
         gaussian_checker = self.check_gaussian(gaussian)
 
         if alpha_checker is not None:
