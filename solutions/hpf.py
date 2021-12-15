@@ -116,12 +116,34 @@ HPF_kernel = {
 
 
 class HPF:
-    def check_alpha(self, alpha, type):
+    def __init__(self, filter_type, alpha, gaussian):
+        # 예외처리
+        if not isinstance(filter_type, HPF_type):
+            print('Given HPF type is not supported.')
+            exit(0)
+
+        self.kernel = HPF_kernel[filter_type]
+
+        alpha_checker = self.check_alpha(alpha, filter_type)
+        gaussian_checker = self.check_gaussian(gaussian)
+
+        if alpha_checker is not None:
+            print(alpha_checker)
+            exit(0)
+        if gaussian_checker is not None:
+            print(gaussian_checker)
+            exit(0)
+
+        # 트랙바에 해당하는 값들을 실제 필터링, 가우시안 블러에 사용하는 값으로 연산해서 클래스에 저장
+        self.alpha = alpha / self.kernel[DIVIDER]
+        self.gaussian_ksize = (gaussian * 2) + 1
+
+    def check_alpha(self, alpha):
         if alpha < 0:
             return 'Alpha argument should be bigger than 0.'
 
         if alpha > self.kernel[MAX_ALPHA]:
-            return f'Alpha argument of type {type.name} should be lower than max({self.kernel[MAX_ALPHA]}).'
+            return f'Alpha argument should be lower.'
 
         return None
 
@@ -132,28 +154,6 @@ class HPF:
             return f'gaussian argument should be lower than {MAX_GAUSSIAN_VALUE}.'
 
         return None
-
-    def __init__(self, type, alpha, gaussian):
-        # 예외처리
-        if not isinstance(type, HPF_type):
-            print('Given HPF type is not supported.')
-            exit(0)
-
-        self.kernel = HPF_kernel[type]
-
-        alpha_checker = self.check_alpha(alpha, type)
-        gaussian_checker = self.check_gaussian(gaussian)
-
-        if not alpha_checker == None:
-            print(alpha_checker)
-            exit(0)
-        if not gaussian_checker == None:
-            print(gaussian_checker)
-            exit(0)
-
-        # 트랙바에 해당하는 값들을 실제 필터링, 가우시안 블러에 사용하는 값으로 연산해서 클래스에 저장
-        self.alpha = alpha / self.kernel[DIVIDER]
-        self.gaussian_ksize = (gaussian * 2) + 1
 
     def calculate_HPF(self, img):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -176,16 +176,16 @@ class HPF:
 
         return merged
 
-    def calculate_gaussian(self, img):
+    def calculate_gaussian(self, img_param):
         gaussian = cv2.GaussianBlur(
-            img, (self.gaussian_ksize, self.gaussian_ksize), cv2.BORDER_DEFAULT)
+            img_param, (self.gaussian_ksize, self.gaussian_ksize), cv2.BORDER_DEFAULT)
         return gaussian
 
-    def process(self, img, alpha=NOT_FOUND, gaussian=NOT_FOUND):
+    def process(self, img_param, alpha=NOT_FOUND, gaussian=NOT_FOUND):
         if alpha != NOT_FOUND:
-            alpha_checker = self.check_alpha(alpha, type)
+            alpha_checker = self.check_alpha(alpha)
 
-            if not alpha_checker == None:
+            if alpha_checker is not None:
                 print(alpha_checker)
                 exit(0)
 
@@ -194,13 +194,13 @@ class HPF:
         if gaussian != NOT_FOUND:
             gaussian_checker = self.check_gaussian(gaussian)
 
-            if not gaussian_checker == None:
+            if gaussian_checker is not None:
                 print(gaussian_checker)
                 exit(0)
 
             self.gaussian_ksize = (gaussian * 2) + 1
 
-        HPF_calculated = self.calculate_HPF(img)
+        HPF_calculated = self.calculate_HPF(img_param)
         result_img = self.calculate_gaussian(HPF_calculated)
         return result_img
 
