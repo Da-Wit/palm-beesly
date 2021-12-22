@@ -326,24 +326,16 @@ def rotate_point(point, pivot, degree):
     return (x2, y2)
 
 
-def custom_sobel(im, xKernel, yKernel):
-    # This function is incomplete. Do not use it.
+def find_index(list_param, condition_funct):
+    for index in range(len(list_param)):
+        if condition_funct(index, list_param[index]) is True:
+            return index
+    return None
 
-    # # // Call using built-in Sobel
 
-    # out1 = cv2.convertScaleAbs(out1.copy())
-
-    # // Create custom kernel
-    # xVals = np.array([0.125, 0, -0.125, 0.25, 0, -0.25,
-    #                  0.125, 0, -0.125]).reshape(3, 3)
-
-    xFiltered = cv2.filter2D(im, -1, xKernel, None,
-                             (-1, -1), 0, cv2.BORDER_DEFAULT)
-    xFiltered = cv2.convertScaleAbs(xFiltered.copy())
-
-    yFiltered = cv2.filter2D(im, -1, yKernel, None,
-                             (-1, -1), 0, cv2.BORDER_DEFAULT)
-    yFiltered = cv2.convertScaleAbs(yFiltered.copy())
-
-    img_sobel = cv2.addWeighted(xFiltered, 1, yFiltered, 1, 0)
-    return img_sobel
+def find_indices(list_param, condition_funct):
+    result = []
+    for index in range(len(list_param)):
+        if condition_funct(index, list_param[index]) is True:
+            result.append(index)
+    return result
