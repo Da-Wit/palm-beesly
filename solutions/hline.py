@@ -6,9 +6,9 @@ class Hline:
     def add_line(self, w, h):
         self.pointlist.append([w, h])
 
-    def is_continuable(self, w, h):
-        if abs(self.pointlist[-1][1] - h) < 3 \
-                and abs(self.pointlist[-1][0] - w) < 3:
+    def is_continuable(self, w, h, max_distance=3):
+        if abs(self.pointlist[-1][1] - h) < max_distance \
+                and abs(self.pointlist[-1][0] - w) < max_distance:
             return True
         return False
 

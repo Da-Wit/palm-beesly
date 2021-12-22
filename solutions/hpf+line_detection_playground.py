@@ -228,6 +228,9 @@ minLineLength = 30
 maxLineGap = 5
 lines = cv2.HoughLinesP(edges, cv2.HOUGH_PROBABILISTIC,
                         np.pi / 180, 30, minLineLength, maxLineGap)
+
+# cv2.HoughLines(검출 이미지, 거리, 각도, 임곗값, 거리 약수, 각도 약수, 최소 각도, 최대 각도)
+# cv2.HoughLinesP(검출 이미지, 거리, 각도, 임곗값, 최소 선 길이, 최대 선 간격)
 for x in range(0, len(lines)):
     print(lines[x])
     for x1, y1, x2, y2 in lines[x]:
