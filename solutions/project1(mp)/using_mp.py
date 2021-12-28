@@ -1,9 +1,7 @@
 import cv2
 import mediapipe as mp
 import numpy as np
-
-import calculator
-import utils
+import solutions.utils as utils
 
 # 숫자가 크면 클수록 pip와 mcp 사이의 간격이 커집니다.
 # 소수도 가능하고, 에러가 나면 이 수를 키우거나 줄이면 됩니다.
@@ -57,6 +55,22 @@ def get_finger_coord(target, neighbor, width, height, ratio=DFER):
         height)
 
 
+def get_intersection(bin_img, x1, y1, x2, y2):
+    result_coord = (0, 0)
+    repeatable_x, repeatable_y = x1, y1
+    accumulatedValue = x1
+    ratio = (x2 - x1) / (y2 - y1)
+
+    while (repeatable_y >= y2):
+        if (bin_img[repeatable_y, repeatable_x] == 255):
+            result_coord = (repeatable_x, repeatable_y)
+            break
+        repeatable_y -= 1
+        accumulatedValue -= ratio
+        repeatable_x = int(accumulatedValue)
+    return result_coord
+
+
 def get_intersection_coord_between_finger_and_palm(pip_mp, mcp_mp, img, pip_ratio=DFER, mcp_ratio=DFER):
     height, width, _ = img.shape
     pip = get_finger_coord(pip_mp, mcp_mp, width, height, pip_ratio)
@@ -72,7 +86,7 @@ def get_intersection_coord_between_finger_and_palm(pip_mp, mcp_mp, img, pip_rati
     else:
         y1, x1 = pip[Y], pip[X]
         y2, x2 = mcp[Y], mcp[X]
-    return calculator.get_intersection(binary_img, x1, y1, x2, y2)
+    return get_intersection(binary_img, x1, y1, x2, y2)
 
 
 def get_coords(landmark, img):

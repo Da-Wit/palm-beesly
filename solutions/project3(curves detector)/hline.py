@@ -1,6 +1,5 @@
-import utils
+import solutions.utils as utils
 import random
-import copy
 
 
 class Hline:
@@ -19,17 +18,15 @@ class Hline:
         return -1
 
 
-def set_line_info(nline, x, y, max_distance, for_debugging):
+def set_line_info(nline, x, y, max_distance):
     find = False
     for n in nline:
         if n.is_continuable(x, y, max_distance) > -1:
             find = True
             n.add_line(x, y)
-            for_debugging[y][x] = copy.deepcopy(n.color)
     if find is False:
         hl = Hline()
         nline.append(hl)
         hl.add_line(x, y)
-        for_debugging[y][x] = copy.deepcopy(hl.color)
 
     return find

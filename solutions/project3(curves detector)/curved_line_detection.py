@@ -2,9 +2,9 @@ import copy
 import cv2
 from hline import *
 import numpy as np
-import utils
+import solutions.utils as utils
 
-image_path = "C:/Users/USER/workspace/palm/test_img/edit6.png"
+image_path = "/test_img/edit6.png"
 img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
 # cv2.imwrite("ORIGINAL.png", utils.resize(img, width=400))

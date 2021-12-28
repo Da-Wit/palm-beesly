@@ -1,20 +1,10 @@
 # This file focus on horizontal_hline_list and vertical_hline_list, not nline3
 
-import copy
 import cv2
 from hline import *
-import utils
+import copy
+import solutions.utils as utils
 
-
-# h, w = img.shape[:2]
-# horizontal_hline_list = []  # 가로 선 나올때마다 추가됨
-# vertical_hline_list = []  # 세로 선 나올때마다 추가됨
-
-# 맨 처음 for 문 도는데 처음이 선임
-# 맨 처음 for 문 도는데 처음이 선이 아님
-# 선 인식 됐다가 인식 안된 상황
-# 선 인식 안 됐다가 인식 된 상황
-# 1번째 for문 바뀌는 상황
 
 def get_roi(img, min_grayscale=0):
     copied = copy.deepcopy(img)
@@ -78,8 +68,10 @@ def find_one_orientation_lines(img_param, min_grayscale, max_line_distance, is_h
         second_for_loop_max = w
 
     result = []
+    min_j_gap = max_line_distance + 1
     for i in range(0, first_for_loop_max):
         find = False
+        prev_j = 0
         for j in range(0, second_for_loop_max):
             if is_horizontal:
                 x = i
@@ -90,8 +82,12 @@ def find_one_orientation_lines(img_param, min_grayscale, max_line_distance, is_h
             if img_param[y][x] > min_grayscale and find is False:
                 find = True
                 set_line_info(result, x, y, max_line_distance)
-            if img_param[y][x] <= min_grayscale and find is True:
+                prev_j = j
+
+            elif img_param[y][x] <= min_grayscale and find is True:
                 find = False
+                if j - prev_j > min_j_gap:
+                    set_line_info(result, x, y, max_line_distance)
     return result
 
 
@@ -157,7 +153,7 @@ def get_calculated_img(img, min_grayscale, min_line_length, max_line_distance=3)
     return horizontal_img, vertical_img
 
 
-image_path = "C:/Users/USER/workspace/palm/test_img/edit5.png"
+image_path = "/test_img/edit5.png"
 # image_path = "C:/Users/USER/Desktop/abcd.jpg"
 img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 img = get_roi(img)
@@ -170,100 +166,19 @@ min_grayscale = 63
 min_line_length = 6
 
 # Default value is 3
-max_line_distance = 3
+max_line_distance = 8
 
 img2, img3 = get_calculated_img(img, min_grayscale, min_line_length)
 
 result = img2 + img3
 
-window_name = 'result'
-
-grayscale_trackbar_name = 'min_grayscale'
-grayscale_trackbar_start_pos = min_grayscale
-max_grayscale_trackbar_val = 255
-
-line_length_trackbar_name = 'line_length'
-line_length_trackbar_start_pos = min_line_length
-max_line_length_trackbar_val = 15
-
-max_line_distance_trackbar_name = 'max_line_distance'
-max_line_distance_trackbar_start_pos = max_line_distance
-max_max_line_distance_trackbar_val = 14
 # window_name을 이름으로 하는 윈도우를 만들어 놓음으로써 해당 윈도우에 트랙바를 달 수 있게 함
-cv2.namedWindow(window_name)
 
 
-def on_grayscale_trackbar_changed(trackbar_val, img_param):
-    min_line_length = cv2.getTrackbarPos(
-        line_length_trackbar_name, window_name)
-
-    max_line_distance = cv2.getTrackbarPos(
-        max_line_distance_trackbar_name, window_name)
-
-    horizontal_img, vertical_img = get_calculated_img(img_param, min_grayscale=trackbar_val,
-                                                      min_line_length=min_line_length,
-                                                      max_line_distance=max_line_distance)
-
-    result_img = horizontal_img + vertical_img
-
-    cv2.imshow(window_name, utils.resize(result_img, width=400))
-
-
-def on_line_length_trackbar_changed(trackbar_val, img_param):
-    min_grayscale = cv2.getTrackbarPos(
-        grayscale_trackbar_name, window_name)
-
-    max_line_distance = cv2.getTrackbarPos(
-        max_line_distance_trackbar_name, window_name)
-
-    horizontal_img, vertical_img = get_calculated_img(img_param, min_grayscale=min_grayscale,
-                                                      min_line_length=trackbar_val, max_line_distance=max_line_distance)
-
-    result_img = horizontal_img + vertical_img
-
-    cv2.imshow(window_name, utils.resize(result_img, width=400))
-
-
-def on_max_line_distance_trackbar_changed(trackbar_val, img_param):
-    min_grayscale = cv2.getTrackbarPos(
-        grayscale_trackbar_name, window_name)
-
-    min_line_length = cv2.getTrackbarPos(
-        line_length_trackbar_name, window_name)
-
-    horizontal_img, vertical_img = get_calculated_img(img_param, min_grayscale=min_grayscale,
-                                                      min_line_length=min_line_length, max_line_distance=trackbar_val)
-    result_img = horizontal_img + vertical_img
-
-    cv2.imshow(window_name, utils.resize(result_img, width=400))
-
-
-# # 이름이 window_name인 창에 scharr 커널에 곱할 값을 설정하는 트랙바를 만든다
-cv2.createTrackbar(grayscale_trackbar_name,
-                   window_name,
-                   grayscale_trackbar_start_pos,
-                   max_grayscale_trackbar_val,
-                   lambda val: on_grayscale_trackbar_changed(val, img),
-                   )
-
-cv2.createTrackbar(line_length_trackbar_name,
-                   window_name,
-                   line_length_trackbar_start_pos,
-                   max_line_length_trackbar_val,
-                   lambda val: on_line_length_trackbar_changed(val, img),
-                   )
-
-cv2.createTrackbar(max_line_distance_trackbar_name,
-                   window_name,
-                   max_line_distance_trackbar_start_pos,
-                   max_max_line_distance_trackbar_val,
-                   lambda val: on_max_line_distance_trackbar_changed(val, img),
-                   )
-
-cv2.imshow("original", utils.resize(img, width=400))
-cv2.imshow("vertical", utils.resize(img3, width=400))
-cv2.imshow("horizontal", utils.resize(img2, width=400))
-cv2.imshow("result", utils.resize(result, width=400))
+cv2.imshow("original", utils.resize(img, width=600))
+cv2.imshow("vertical", utils.resize(img3, width=600))
+cv2.imshow("horizontal", utils.resize(img2, width=600))
+cv2.imshow("result", utils.resize(result, width=600))
 
 cv2.waitKey(0)
 

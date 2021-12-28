@@ -57,16 +57,16 @@ HPF_kernel = {
         [-10, -20, 0, 20, 10],
         [-8, -10, 0, 10, 8],
         [-5, -4, 0, 4, 5]]) / 20,
-        Y: np.array([
-            [-5, -8, -10, -8, -5],
-            [-4, -10, -20, -10, -4],
-            [0, 0, 0, 0, 0],
-            [4, 10, 20, 10, 4],
-            [5, 8, 10, 8, 5]
-        ]) / 20,
-        MAX_ALPHA: max_sobel_alpha,
-        DIVIDER: sobel_divider
-    },
+                     Y: np.array([
+                         [-5, -8, -10, -8, -5],
+                         [-4, -10, -20, -10, -4],
+                         [0, 0, 0, 0, 0],
+                         [4, 10, 20, 10, 4],
+                         [5, 8, 10, 8, 5]
+                     ]) / 20,
+                     MAX_ALPHA: max_sobel_alpha,
+                     DIVIDER: sobel_divider
+                     },
     HPF_type.SB7X7: {X: np.array([
         [-3 / 18, -2 / 13, -1 / 10, 0, 1 / 10, 2 / 13, 3 / 18],
         [-3 / 13, -2 / 8, -1 / 5, 0, 1 / 5, 2 / 8, 3 / 13],
@@ -103,15 +103,15 @@ HPF_kernel = {
         [-3, -6, 0, 6, 3],
         [-2, -2, 0, 2, 2],
         [-1, -1, 0, 1, 1]]) / 60,
-        Y: np.array([
-            [-1, -2, -3, -2, -1],
-            [-1, -2, -6, -2, -1],
-            [0, 0, 0, 0, 0],
-            [1, 2, 6, 2, 1],
-            [1, 2, 3, 2, 1]
-        ]) / 60,
-        MAX_ALPHA: max_scharr_alpha,
-        DIVIDER: scharr_divider},
+                     Y: np.array([
+                         [-1, -2, -3, -2, -1],
+                         [-1, -2, -6, -2, -1],
+                         [0, 0, 0, 0, 0],
+                         [1, 2, 6, 2, 1],
+                         [1, 2, 3, 2, 1]
+                     ]) / 60,
+                     MAX_ALPHA: max_scharr_alpha,
+                     DIVIDER: scharr_divider},
 }
 
 
@@ -208,9 +208,12 @@ class HPF:
 # 아래는 사용 예시입니다
 
 # 이미지 읽기
-image_path = f"C:/Users/USER/workspace/palm/images/sample{2}.2.png"
+image_path = "C:/Users/USER/workspace/palm/test_img/sample2.2.png"
 img = cv2.imread(image_path)
 
+if img is None:
+    print("Image is empty!!")
+    exit(0)
 # alpha(HPF의 2번째 인자)는 트랙바에서처럼 필터마다 최대값이 다른고 0 ~ max_sobel_alpha 혹은 0 ~ max_scharr_alpha이어야 함
 # gaussian(HPF의 3번째 인자)은 트랙바에서처럼 0~10만 가능함
 

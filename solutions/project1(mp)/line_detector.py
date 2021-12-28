@@ -1,9 +1,8 @@
 import cv2
 import mediapipe as mp
 import numpy as np
-
 import using_mp
-import utils
+import solutions.utils as utils
 
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
@@ -12,13 +11,13 @@ number_of_sample_images = 44
 
 # 이미지 샘플 개수만큼 for문을 돈다
 for i in range(number_of_sample_images):
-    image_path = f"C:/Users/USER/workspace/palm/images/sample{2}.png"
-    # image_path = f"C:/Users/USER/workspace/palm/images/sample{25}.png"
+    image_path = f"C:/Users/USER/workspace/palm/test_img/sample{3}.png"
+    # image_path = f"C:/Users/USER/workspace/palm/test_img/sample{25}.png"
     image = cv2.imread(image_path)
 
     # 이미지가 제대로 불러와지지 않으면 에러 출력하고 다음 숫자로 넘어감
     if image is None:
-        print(f"images/sample{i}.png is empty!!")
+        print(f"test_img/sample{i}.png is empty!!")
         continue
 
     # 출력 시 화면에 적당한 크기로 출력되게 하기 위해 이미지를 resize함
