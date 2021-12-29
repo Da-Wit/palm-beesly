@@ -30,7 +30,7 @@ def get_distance(coord1, coord2):
 # 기울기를 구하는  분모가 0이 될 수 있어서, 분모에 1e-9(적당히 작은 값)를 더했다.
 
 
-def get_degree(coord1, coord2):
+def get_gradient(coord1, coord2):
     return (coord1[1] - coord2[1]) / ((coord1[0] - coord2[0]) + 10 ** (-9))
 
 
@@ -69,7 +69,7 @@ def threshold(image):
 
 
 def aws(image, cnt, coord1, coord2):
-    degree = get_degree(coord1, coord2)
+    degree = get_gradient(coord1, coord2)
     # luxk is a coordinate on a linear equation
     # that includes both of coord1 and coord2.
     # Distance of luxk-coord1 and
@@ -95,7 +95,7 @@ def aws(image, cnt, coord1, coord2):
     coord_of_min_degree_gap = np.array([0, 0])
     for [[cnt_x, cnt_y]] in cnt:
         if cnt_x <= bigger_x and cnt_x >= smaller_x and cnt_y <= bigger_y and cnt_y >= smaller_y:
-            degree_gap = abs(get_degree(
+            degree_gap = abs(get_gradient(
                 np.array([cnt_x, cnt_y]), coord1) - degree)
             if degree_gap < min_degree_gap:
                 min_degree_gap = degree_gap
@@ -114,7 +114,7 @@ def aws(image, cnt, coord1, coord2):
 
 
 def aws_new(image, cnt, coord1, coord2):
-    degree = get_degree(coord1, coord2)
+    degree = get_gradient(coord1, coord2)
     # luxk is a coordinate on a straight line
     # that includes both of coord1 and coord2.
     # Distance of luxk-coord1 and
@@ -143,7 +143,7 @@ def aws_new(image, cnt, coord1, coord2):
     for [[cnt_x, cnt_y]] in cnt:
         if cnt_x <= bigger_x and cnt_x >= smaller_x and cnt_y <= bigger_y and cnt_y >= smaller_y:
             count += 1
-            degree_gap = abs(get_degree(
+            degree_gap = abs(get_gradient(
                 np.array([cnt_x, cnt_y]), coord1) - degree)
             if degree_gap < degree_gap_criteria:
                 coords_on_line = np.append(

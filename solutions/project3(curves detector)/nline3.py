@@ -1,6 +1,6 @@
-import copy
 import cv2
 from hline import *
+import copy
 import numpy as np
 import solutions.utils as utils
 
