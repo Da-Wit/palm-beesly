@@ -61,6 +61,8 @@ def get_roi(img, min_grayscale=0):
 
 def find_one_orientation_lines(img_param, min_grayscale, max_line_distance, is_horizontal):
     h, w = img_param.shape[:2]
+    for_debugging = copy.deepcopy(img_param) * 0
+    # for_debugging = cv2.cvtColor(for_debugging, cv2.COLOR_GRAY2RGB)
     if is_horizontal:
         first_for_loop_max = w
         second_for_loop_max = h
@@ -69,7 +71,7 @@ def find_one_orientation_lines(img_param, min_grayscale, max_line_distance, is_h
         second_for_loop_max = w
 
     result = []
-    min_j_gap = max_line_distance + 1
+    min_j_gap = 3
     for i in range(0, first_for_loop_max):
         find = False
         prev_j = 0
@@ -81,14 +83,27 @@ def find_one_orientation_lines(img_param, min_grayscale, max_line_distance, is_h
                 x = j
                 y = i
             if img_param[y][x] > min_grayscale and find is False:
+                # print("Black2White")
                 find = True
                 append_point(result, x, y, max_line_distance)
                 prev_j = j
 
             elif img_param[y][x] <= min_grayscale and find is True:
+                # print("White2Black")
                 find = False
                 if j - prev_j > min_j_gap:
                     append_point(result, x, y, max_line_distance)
+
+            # temp = copy.deepcopy(for_debugging)
+            # cv2.circle(temp, (x, y), max_line_distance, (255, 0, 0), 1)
+            # temp[y][x] = [0, 0, 255]
+            # cv2.imshow("img_on_progress", utils.resize(temp, height=1000))
+
+            # k = cv2.waitKey(0)
+            # if k == 27:  # Esc key to stop
+            #     cv2.destroyAllWindows()
+            #     exit(0)
+
     return result
 
 
@@ -163,7 +178,7 @@ def get_calculated_img(img, min_grayscale, min_line_length, max_line_distance=3)
     return horizontal_img, vertical_img
 
 
-image_path = "C:/Users/USER/workspace/palm/test_img/edit11.png"
+image_path = "C:/Users/USER/workspace/palm/test_img/edit2.png"
 img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
 if img is None:
@@ -173,16 +188,17 @@ if img is None:
 img = get_roi(img)
 
 # Default value is 0
-min_grayscale = 63
+# min_grayscale = 63
+min_grayscale = 70
 
 # The minimum number of dots in one line
 # Default value is 4
 min_line_length = 6
 
 # Default value is 3
-max_line_distance = 8
+max_line_distance = 6
 
-img2, img3 = get_calculated_img(img, min_grayscale, min_line_length)
+img2, img3 = get_calculated_img(img, min_grayscale, min_line_length, max_line_distance)
 
 result = img2 + img3
 
@@ -232,9 +248,16 @@ window_name = 'result'
 #                                                                               get_calculated_img),
 #                    )
 
-cv2.imshow("original", utils.resize(img, width=600))
-cv2.imshow("vertical", utils.resize(img3, width=600))
-cv2.imshow("horizontal", utils.resize(img2, width=600))
-cv2.imshow(window_name, utils.resize(result, width=600))
+# cv2.imshow("original", utils.resize(img, width=600))
+cv2.imwrite("C:/Users/USER/Desktop/origi.png", utils.resize(img, width=600))
+
+# cv2.imshow("vertical", utils.resize(img3, width=600))
+cv2.imwrite("C:/Users/USER/Desktop/vertical.png", utils.resize(img3, width=600))
+
+# cv2.imshow("horizontal", utils.resize(img2, width=600))
+cv2.imwrite("C:/Users/USER/Desktop/horizontal.png", utils.resize(img2, width=600))
+
+cv2.imwrite("C:/Users/USER/Desktop/result.png", utils.resize(result, width=600))
+# cv2.imshow(window_name, utils.resize(result, width=600))
 
 cv2.waitKey(0)

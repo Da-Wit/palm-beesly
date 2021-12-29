@@ -22,17 +22,17 @@ class Hline:
         return -1
 
     def avg_gradient_with(self, x, y):
-        이것보단커야지_기울기_구함 = 10
+        기울기구할때쓸맨앞점들수 = 4
 
-        if len(self.pointlist) < 이것보단커야지_기울기_구함:
+        if len(self.pointlist) < 기울기구할때쓸맨앞점들수:
             return -1
         elif self.gradient == -1:
-            기울기구할때쓸맨앞점들수 = 10
+
             sum_gradient = 0
 
             for i in range(round(기울기구할때쓸맨앞점들수 / 2)):
                 point1 = self.pointlist[i]
-                point2 = self.pointlist[i + 5]
+                point2 = self.pointlist[i + round(기울기구할때쓸맨앞점들수 / 2)]
 
                 sum_gradient = sum_gradient + utils.get_gradient(point1, point2)
 
@@ -41,9 +41,9 @@ class Hline:
 
         coord1 = [x, y]
         sum_gradient = 0
-        for i in range(이것보단커야지_기울기_구함):
+        for i in range(기울기구할때쓸맨앞점들수):
             sum_gradient = sum_gradient + utils.get_gradient(coord1, self.pointlist[i])
-        avg_gradient = sum_gradient / 이것보단커야지_기울기_구함
+        avg_gradient = sum_gradient / 기울기구할때쓸맨앞점들수
 
         return avg_gradient
 
@@ -71,6 +71,7 @@ def set_line_info(nline, x, y, max_distance):
 
 
 def append_point(nline, x, y, max_distance):
+    # print("--------------------------------------------")
     indices_of_nearby_lines = get_indices_of_nearby_lines(nline, x, y, max_distance)
     number_of_nearby_lines = len(indices_of_nearby_lines)
 
@@ -78,19 +79,25 @@ def append_point(nline, x, y, max_distance):
     # 새로운 hline 만들어서 nline에 append
     # 즉, 새로운 선 발견했다고 추정해 새로운 선 추가
     if number_of_nearby_lines == 0:
-        hl = Hline()
-        nline.append(hl)
-        hl.add_point(x, y)
+        # print("number_of_nearby_lines == 0")
+        hline = Hline()
+        nline.append(hline)
+        hline.add_point(x, y)
+        # for_debugging[y][x] = hline.color
 
     # 점 주변에 선이 1개일 때
     # 그 1개의 선에 점 추가
     elif number_of_nearby_lines == 1:
-        target = nline[indices_of_nearby_lines[0]]
-        target.add_point(x, y)
+        # print("number_of_nearby_lines == 1")
+        hline = nline[indices_of_nearby_lines[0]]
+        hline.add_point(x, y)
+
+        # for_debugging[y][x] = hline.color
 
     # 점 주변에 선이 1개보다 많을 때
     # 기울기로 구함
     else:
+        # print("number_of_nearby_lines >= 2")
         filtered_lines = []
         for i in range(number_of_nearby_lines):
             hline = nline[indices_of_nearby_lines[i]]
@@ -109,8 +116,11 @@ def append_point(nline, x, y, max_distance):
         # 모든 선이 기울기를 구할 수 없을 때
         # 무작위 선 하나에 점을 추가
         if len(filtered_lines) == 0:
+            # print('random')
             random_index = random.randint(0, number_of_nearby_lines - 1)
             nline[indices_of_nearby_lines[random_index]].add_point(x, y)
+            # for_debugging[y][x] = nline[indices_of_nearby_lines[random_index]].color
+
 
         else:
             min_gap = filtered_lines[0]['gap']
@@ -121,3 +131,4 @@ def append_point(nline, x, y, max_distance):
                     min_gap_idx = i
 
             nline[min_gap_idx].add_point(x, y)
+            # for_debugging[y][x] = nline[min_gap_idx].color
