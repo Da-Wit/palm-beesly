@@ -83,13 +83,13 @@ def find_one_orientation_lines(img_param, min_grayscale, max_line_distance, is_h
                 y = i
             if img_param[y][x] > min_grayscale and find is False:
                 find = True
-                lines.append_point([x, y], max_line_distance)
+                lines.handle_point([x, y], max_line_distance)
                 prev_j = j
 
             elif img_param[y][x] <= min_grayscale and find is True:
                 find = False
                 if j - prev_j > min_j_gap:
-                    lines.append_point([x, y], max_line_distance)
+                    lines.handle_point([x, y], max_line_distance)
 
     return lines
 
@@ -106,68 +106,22 @@ def find_vertical_lines(img_param, min_grayscale, max_line_distance):
                                       is_horizontal=False)
 
 
-# 선 길이가 일정 길이 이하인 선이 필터링된 nline를 리턴함
-def filter_hline_by_line_length(lines, min_length):
-    line_list = copy.deepcopy(lines.line_list)
-    for hline in line_list:
-        if len(hline.point_list) < min_length:
-            line_list.remove(hline)  # 길이가 3픽셀도 안되는 선은 세로선이거나 잡음이므로 지움.
-    return line_list
-
-
-# nline을 시각화함
-def visualize_hline(hline_list, img_param, imshow=False, color=False):
-    copied_img = copy.deepcopy(img_param)
-    if color:
-        copied_img = cv2.cvtColor(copied_img, cv2.COLOR_GRAY2BGR)
-
-    for hline in hline_list:
-        for p in hline.point_list:
-            if color:
-                copied_img[p[1]][p[0]] = hline.color
-            else:
-                copied_img[p[1]][p[0]] = 255
-
-        if imshow:
-            cv2.imshow("img_on_progress", utils.resize(copied_img, width=600))
-
-            k = cv2.waitKey(0)
-            if k == 27:  # Esc key to stop
-                cv2.destroyAllWindows()
-                exit(0)
-    return copied_img
-
-
-# 필터링된 가로, 세로 nline을 한 번에 리턴함
-def get_hlines(img, min_grayscale, min_line_length, max_line_distance=3):
-    horizontal_hline_list = find_horizontal_lines(
-        img, min_grayscale, max_line_distance)
-    vertical_hline_list = find_vertical_lines(
-        img, min_grayscale, max_line_distance)
-
-    horizontal_hline_list = horizontal_hline_list.filter_hline_by_line_length(min_line_length)
-    vertical_hline_list = vertical_hline_list.filter_hline_by_line_length(min_line_length)
-
-    return horizontal_hline_list, vertical_hline_list
-
-
 # 이미지와 값 조정 변수를 넣어주면 최종적으로 시각화된 이미지를 가로, 세로로 나눠 리턴함
 # 외부에서 최종적으로 사용할 함수
-def get_calculated_img(img_param, min_grayscale, min_line_length, max_line_distance=3):
-    # height, width = img_param.shape[:2]
-    #
-    # horizontal_img = np.zeros((height, width, 1), dtype=np.uint8)
-    # vertical_img = np.zeros((height, width, 1), dtype=np.uint8)
-    horizontal_img = copy.deepcopy(img) * 0
-    vertical_img = copy.deepcopy(img) * 0
+def main(img_param, min_grayscale, min_line_length, max_line_distance=3):
+    height, width = img_param.shape[:2]
 
-    horizontal_hline_list, vertical_hline_list = get_hlines(
-        img_param, min_grayscale, min_line_length, max_line_distance)
+    horizontal_img = np.zeros((height, width, 1), dtype=np.uint8)
+    vertical_img = np.zeros((height, width, 1), dtype=np.uint8)
 
-    horizontal_img = visualize_hline(
-        horizontal_hline_list, horizontal_img, imshow=False, color=True)
-    vertical_img = visualize_hline(
-        vertical_hline_list, vertical_img, imshow=False, color=True)
+    horizontal_lines = find_horizontal_lines(img, min_grayscale, max_line_distance)
+    vertical_lines = find_vertical_lines(img, min_grayscale, max_line_distance)
+
+    horizontal_lines.filter_by_line_length(min_line_length)
+    vertical_lines.filter_by_line_length(min_line_length)
+
+    horizontal_img = horizontal_lines.visualize_lines(horizontal_img, imshow=False, color=True)
+    vertical_img = vertical_lines.visualize_lines(vertical_img, imshow=False, color=True)
 
     return horizontal_img, vertical_img
 
@@ -192,7 +146,7 @@ min_line_length = 6
 # Default value is 3
 max_line_distance = 6
 
-img2, img3 = get_calculated_img(img, min_grayscale, min_line_length, max_line_distance)
+img2, img3 = main(img, min_grayscale, min_line_length, max_line_distance)
 
 result = img2 + img3
 

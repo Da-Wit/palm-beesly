@@ -1,9 +1,8 @@
-import solutions.utils as utils
 from lineone import LineOne
 import random
 import copy
-
-기울기구할때쓸맨앞점들수 = 4
+import cv2
+import solutions.utils as utils
 
 
 class Lines:
@@ -29,13 +28,13 @@ class Lines:
                 find = True
                 line.add_point(point)
         if find is False:
-            line = LineOne()
+            line = LineOne(self.number_of_front_points_to_find_slope)
             self.line_list.append(line)
             line.add_point(point)
 
         return find
 
-    def append_point(self, point, max_distance):
+    def handle_point(self, point, max_distance):
         close_lines = self.get_indices_of_nearby_lines(point, max_distance)
         length_of_close_lines = len(close_lines)
 
@@ -43,7 +42,7 @@ class Lines:
         # 새로운 hline 만들어서 nline에 append
         # 즉, 새로운 선 발견했다고 추정해 새로운 선 추가
         if length_of_close_lines == 0:
-            lineOne = LineOne()
+            lineOne = LineOne(self.number_of_front_points_to_find_slope)
             self.add_line(lineOne)
             lineOne.add_point(point)
 
@@ -62,7 +61,7 @@ class Lines:
             for i in range(length_of_close_lines):
                 hline = self.line_list[close_lines[i]]
 
-                if len(hline.point_list) < 기울기구할때쓸맨앞점들수:
+                if len(hline.point_list) < self.number_of_front_points_to_find_slope:
                     continue
                 elif hline.have_own_slope() is False:
                     hline.calculate_own_slope()
@@ -90,9 +89,33 @@ class Lines:
 
                 self.line_list[min_gap_idx].add_point(point)
 
-    def filter_hline_by_line_length(self, min_length):
+    def filter_by_line_length(self, min_length):
         line_list = copy.deepcopy(self.line_list)
         for lineOne in line_list:
             if len(lineOne.point_list) < min_length:
                 line_list.remove(lineOne)  # 길이가 3픽셀도 안되는 선은 세로선이거나 잡음이므로 지움.
-        return line_list
+        self.line_list = line_list
+
+    def visualize_lines(self, img_param, imshow=False, color=False):
+        copied_img = copy.deepcopy(img_param)
+        if color:
+            copied_img = cv2.cvtColor(copied_img, cv2.COLOR_GRAY2BGR)
+
+        for lineOne in self.line_list:
+            for point in lineOne.point_list:
+                x = point[0]
+                y = point[1]
+
+                if color:
+                    copied_img[y][x] = lineOne.color
+                else:
+                    copied_img[y][x] = 255
+
+            if imshow:
+                cv2.imshow("img_on_progress", utils.resize(copied_img, width=600))
+
+                k = cv2.waitKey(0)
+                if k == 27:  # Esc key to stop
+                    cv2.destroyAllWindows()
+                    exit(0)
+        return copied_img
