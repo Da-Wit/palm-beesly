@@ -205,59 +205,8 @@ result = img2 + img3
 # # window_name을 이름으로 하는 윈도우를 만들어 놓음으로써 해당 윈도우에 트랙바를 달 수 있게 함
 window_name = 'result'
 
-# grayscale_trackbar_name = 'min_grayscale'
-# grayscale_trackbar_start_pos = min_grayscale
-# max_grayscale_trackbar_val = 255
-#
-# line_length_trackbar_name = 'line_length'
-# line_length_trackbar_start_pos = min_line_length
-# max_line_length_trackbar_val = 15
-#
-# max_line_distance_trackbar_name = 'max_line_distance'
-# max_line_distance_trackbar_start_pos = max_line_distance
-# max_max_line_distance_trackbar_val = 14
-# # window_name을 이름으로 하는 윈도우를 만들어 놓음으로써 해당 윈도우에 트랙바를 달 수 있게 함
-# cv2.namedWindow(window_name)
-#
-# # # 이름이 window_name인 창에 scharr 커널에 곱할 값을 설정하는 트랙바를 만든다
-# cv2.createTrackbar(grayscale_trackbar_name,
-#                    window_name,
-#                    grayscale_trackbar_start_pos,
-#                    max_grayscale_trackbar_val,
-#                    lambda val: trackbar.on_grayscale_trackbar_changed(window_name, val, img, line_length_trackbar_name,
-#                                                                       max_line_distance_trackbar_name,
-#                                                                       get_calculated_img),
-#                    )
-#
-# cv2.createTrackbar(line_length_trackbar_name,
-#                    window_name,
-#                    line_length_trackbar_start_pos,
-#                    max_line_length_trackbar_val,
-#                    lambda val: trackbar.on_line_length_trackbar_changed(window_name, val, img, grayscale_trackbar_name,
-#                                                                         max_line_distance_trackbar_name,
-#                                                                         get_calculated_img),
-#                    )
-#
-# cv2.createTrackbar(max_line_distance_trackbar_name,
-#                    window_name,
-#                    max_line_distance_trackbar_start_pos,
-#                    max_max_line_distance_trackbar_val,
-#                    lambda val: trackbar.on_max_line_distance_trackbar_changed(window_name, val, img,
-#                                                                               grayscale_trackbar_name,
-#                                                                               line_length_trackbar_name,
-#                                                                               get_calculated_img),
-#                    )
-
-# cv2.imshow("original", utils.resize(img, width=600))
-cv2.imwrite("C:/Users/USER/Desktop/origi.png", utils.resize(img, width=600))
-
-# cv2.imshow("vertical", utils.resize(img3, width=600))
-cv2.imwrite("C:/Users/USER/Desktop/vertical.png", utils.resize(img3, width=600))
-
-# cv2.imshow("horizontal", utils.resize(img2, width=600))
-cv2.imwrite("C:/Users/USER/Desktop/horizontal.png", utils.resize(img2, width=600))
-
-cv2.imwrite("C:/Users/USER/Desktop/result.png", utils.resize(result, width=600))
-# cv2.imshow(window_name, utils.resize(result, width=600))
-
+cv2.imshow("original", utils.resize(img, width=600))
+cv2.imshow("vertical", utils.resize(img3, width=600))
+cv2.imshow("horizontal", utils.resize(img2, width=600))
+cv2.imshow(window_name, utils.resize(result, width=600))
 cv2.waitKey(0)
