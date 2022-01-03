@@ -2,23 +2,6 @@ import cv2
 from solutions.utils import resize
 
 
-# window_name = 'result'
-#
-# grayscale_trackbar_name = 'min_grayscale'
-# grayscale_trackbar_start_pos = min_grayscale
-# max_grayscale_trackbar_val = 255
-#
-# line_length_trackbar_name = 'line_length'
-# line_length_trackbar_start_pos = min_line_length
-# max_line_length_trackbar_val = 15
-#
-# max_line_distance_trackbar_name = 'max_line_distance'
-# max_line_distance_trackbar_start_pos = max_line_distance
-# max_max_line_distance_trackbar_val = 14
-# # window_name을 이름으로 하는 윈도우를 만들어 놓음으로써 해당 윈도우에 트랙바를 달 수 있게 함
-# cv2.namedWindow(window_name)
-
-
 def on_grayscale_trackbar_changed(window_name, trackbar_val, img_param, line_length_trackbar_name,
                                   max_line_distance_trackbar_name, get_calculated_img):
     min_line_length = cv2.getTrackbarPos(

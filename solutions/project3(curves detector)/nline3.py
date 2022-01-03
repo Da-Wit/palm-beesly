@@ -1,5 +1,5 @@
 import cv2
-from hline import *
+from lineone import *
 import copy
 import numpy as np
 import solutions.utils as utils
@@ -7,7 +7,6 @@ import solutions.utils as utils
 image_path = "/test_img/edit6.png"
 img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
-# cv2.imwrite("ORIGINAL.png", utils.resize(img, width=400))
 img2 = copy.deepcopy(img)
 img3 = copy.deepcopy(img)
 img4 = copy.deepcopy(img)
@@ -59,7 +58,7 @@ for j in range(0, h - 1):
 def is_connected_hlines(hline1, hline2, min_distance):
     for point1 in hline1:
         for point2 in hline2:
-            distance = utils.get_distance(point1, point2)
+            distance = utils.distance_between(point1, point2)
             if distance < min_distance:
                 return True
     return False
@@ -138,18 +137,18 @@ min_distance = 5
 
 for index_of_horizontal_hline_in_horizontal_nline in range(len(nline_copied)):
     for hline_in_vertical_nline in nline2:
-        if is_connected_hlines(nline_copied[index_of_horizontal_hline_in_horizontal_nline].pointlist,
-                               hline_in_vertical_nline.pointlist,
+        if is_connected_hlines(nline_copied[index_of_horizontal_hline_in_horizontal_nline].point_list,
+                               hline_in_vertical_nline.point_list,
                                min_distance):
-            add_hline_to_unnamed_list(unnamed, nline_copied[index_of_horizontal_hline_in_horizontal_nline].pointlist,
-                                      hline_in_vertical_nline.pointlist, index_of_horizontal_hline_in_horizontal_nline)
+            add_hline_to_unnamed_list(unnamed, nline_copied[index_of_horizontal_hline_in_horizontal_nline].point_list,
+                                      hline_in_vertical_nline.point_list, index_of_horizontal_hline_in_horizontal_nline)
 
 for i in nline[:]:
-    if len(i.pointlist) < MIN_LINE_LENGTH:
+    if len(i.point_list) < MIN_LINE_LENGTH:
         nline.remove(i)  # 길이가 3픽셀도 안되는 선은 세로선이거나 잡음이므로 지움.
 
 for i in nline2[:]:
-    if len(i.pointlist) < MIN_LINE_LENGTH:
+    if len(i.point_list) < MIN_LINE_LENGTH:
         nline2.remove(i)  # 길이가 3픽셀도 안되는 선은 세로선이거나 잡음이므로 지움.
 
 unnamed = combine_unnamed_list_self(unnamed)
@@ -168,7 +167,7 @@ img4 = get_img4(nline3, img4)
 # print("세로방향 ", len(nline2), " 개")
 
 for i in nline:
-    for k in i.pointlist:
+    for k in i.point_list:
         img2[k[1]][k[0]] = 255
     # cv2.imshow("img2", img2)
     #
@@ -180,11 +179,11 @@ for i in nline:
 for i in nline:
     # img2[i.pointlist[0][1]][i.pointlist[0][0]] = [0, 255, 255]
     # img2[i.pointlist[-1][1]][i.pointlist[-1][0]] = [255, 0, 255]
-    img2[i.pointlist[0][1]][i.pointlist[0][0]] = 255
-    img2[i.pointlist[-1][1]][i.pointlist[-1][0]] = 255
+    img2[i.point_list[0][1]][i.point_list[0][0]] = 255
+    img2[i.point_list[-1][1]][i.point_list[-1][0]] = 255
 
 for i in nline2:
-    for k in i.pointlist:
+    for k in i.point_list:
         img3[k[1]][k[0]] = 255
     # cv2.imshow("img3", img3)
     #
@@ -196,8 +195,8 @@ for i in nline2:
 for i in nline2:
     # img3[i.pointlist[0][1]][i.pointlist[0][0]] = [0, 255, 255]
     # img3[i.pointlist[-1][1]][i.pointlist[-1][0]] = [255, 0, 255]
-    img3[i.pointlist[0][1]][i.pointlist[0][0]] = 255
-    img3[i.pointlist[-1][1]][i.pointlist[-1][0]] = 255
+    img3[i.point_list[0][1]][i.point_list[0][0]] = 255
+    img3[i.point_list[-1][1]][i.point_list[-1][0]] = 255
 
 result = img2 + img3 + img4
 

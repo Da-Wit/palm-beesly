@@ -1,12 +1,13 @@
-# This file focus on horizontal_hline_list and vertical_hline_list, not nline3
-
 import cv2
-from hline import *
 import copy
 import solutions.utils as utils
-import trackbar
+from lines import Lines
+import numpy as np
 
 
+# 인풋으로 받은 캐니처리만 된 이미지에서 좌, 우, 위, 아래로 grayscle값이
+# min_grayscle 매개변수보다 큰 부분부터 잘라낸 이미지를 리턴함
+# 즉, 쓸데없는 빈 공간을 제거해서 연산을 줄임
 def get_roi(img, min_grayscale=0):
     copied = copy.deepcopy(img)
     height, width = copied.shape[:2]
@@ -59,18 +60,16 @@ def get_roi(img, min_grayscale=0):
     return copied[topmost:downmost, leftmost:rightmost]
 
 
+# 한 방향으로의 hline들의 리스트, nline을 리턴함
 def find_one_orientation_lines(img_param, min_grayscale, max_line_distance, is_horizontal):
     h, w = img_param.shape[:2]
-    for_debugging = copy.deepcopy(img_param) * 0
-    # for_debugging = cv2.cvtColor(for_debugging, cv2.COLOR_GRAY2RGB)
     if is_horizontal:
         first_for_loop_max = w
         second_for_loop_max = h
     else:
         first_for_loop_max = h
         second_for_loop_max = w
-
-    result = []
+    lines = Lines()
     min_j_gap = 3
     for i in range(0, first_for_loop_max):
         find = False
@@ -83,57 +82,47 @@ def find_one_orientation_lines(img_param, min_grayscale, max_line_distance, is_h
                 x = j
                 y = i
             if img_param[y][x] > min_grayscale and find is False:
-                # print("Black2White")
                 find = True
-                append_point(result, x, y, max_line_distance)
+                lines.append_point([x, y], max_line_distance)
                 prev_j = j
 
             elif img_param[y][x] <= min_grayscale and find is True:
-                # print("White2Black")
                 find = False
                 if j - prev_j > min_j_gap:
-                    append_point(result, x, y, max_line_distance)
+                    lines.append_point([x, y], max_line_distance)
 
-            # temp = copy.deepcopy(for_debugging)
-            # cv2.circle(temp, (x, y), max_line_distance, (255, 0, 0), 1)
-            # temp[y][x] = [0, 0, 255]
-            # cv2.imshow("img_on_progress", utils.resize(temp, height=1000))
-
-            # k = cv2.waitKey(0)
-            # if k == 27:  # Esc key to stop
-            #     cv2.destroyAllWindows()
-            #     exit(0)
-
-    return result
+    return lines
 
 
-# 가로 선 찾기
+# find_one_orientation_lines 함수를 사용해 가로선 nline 찾기
 def find_horizontal_lines(img_param, min_grayscale, max_line_distance):
     return find_one_orientation_lines(img_param, min_grayscale, max_line_distance,
                                       is_horizontal=True)
 
 
-# 세로 선 찾기
+# find_one_orientation_lines 함수를 사용해 세로선 nline 찾기
 def find_vertical_lines(img_param, min_grayscale, max_line_distance):
     return find_one_orientation_lines(img_param, min_grayscale, max_line_distance,
                                       is_horizontal=False)
 
 
-def filter_hline_by_line_length(hline_list, min_length):
-    copied_list = copy.deepcopy(hline_list)
-    for hline in copied_list[:]:
-        if len(hline.pointlist) < min_length:
-            copied_list.remove(hline)  # 길이가 3픽셀도 안되는 선은 세로선이거나 잡음이므로 지움.
-    return copied_list
+# 선 길이가 일정 길이 이하인 선이 필터링된 nline를 리턴함
+def filter_hline_by_line_length(lines, min_length):
+    line_list = copy.deepcopy(lines.line_list)
+    for hline in line_list:
+        if len(hline.point_list) < min_length:
+            line_list.remove(hline)  # 길이가 3픽셀도 안되는 선은 세로선이거나 잡음이므로 지움.
+    return line_list
 
 
+# nline을 시각화함
 def visualize_hline(hline_list, img_param, imshow=False, color=False):
     copied_img = copy.deepcopy(img_param)
     if color:
         copied_img = cv2.cvtColor(copied_img, cv2.COLOR_GRAY2BGR)
 
     for hline in hline_list:
-        for p in hline.pointlist:
+        for p in hline.point_list:
             if color:
                 copied_img[p[1]][p[0]] = hline.color
             else:
@@ -149,26 +138,31 @@ def visualize_hline(hline_list, img_param, imshow=False, color=False):
     return copied_img
 
 
+# 필터링된 가로, 세로 nline을 한 번에 리턴함
 def get_hlines(img, min_grayscale, min_line_length, max_line_distance=3):
     horizontal_hline_list = find_horizontal_lines(
         img, min_grayscale, max_line_distance)
     vertical_hline_list = find_vertical_lines(
         img, min_grayscale, max_line_distance)
 
-    horizontal_hline_list = filter_hline_by_line_length(
-        horizontal_hline_list, min_line_length)
-    vertical_hline_list = filter_hline_by_line_length(
-        vertical_hline_list, min_line_length)
+    horizontal_hline_list = horizontal_hline_list.filter_hline_by_line_length(min_line_length)
+    vertical_hline_list = vertical_hline_list.filter_hline_by_line_length(min_line_length)
 
     return horizontal_hline_list, vertical_hline_list
 
 
-def get_calculated_img(img, min_grayscale, min_line_length, max_line_distance=3):
+# 이미지와 값 조정 변수를 넣어주면 최종적으로 시각화된 이미지를 가로, 세로로 나눠 리턴함
+# 외부에서 최종적으로 사용할 함수
+def get_calculated_img(img_param, min_grayscale, min_line_length, max_line_distance=3):
+    # height, width = img_param.shape[:2]
+    #
+    # horizontal_img = np.zeros((height, width, 1), dtype=np.uint8)
+    # vertical_img = np.zeros((height, width, 1), dtype=np.uint8)
     horizontal_img = copy.deepcopy(img) * 0
     vertical_img = copy.deepcopy(img) * 0
 
     horizontal_hline_list, vertical_hline_list = get_hlines(
-        img, min_grayscale, min_line_length, max_line_distance)
+        img_param, min_grayscale, min_line_length, max_line_distance)
 
     horizontal_img = visualize_hline(
         horizontal_hline_list, horizontal_img, imshow=False, color=True)
@@ -202,11 +196,8 @@ img2, img3 = get_calculated_img(img, min_grayscale, min_line_length, max_line_di
 
 result = img2 + img3
 
-# # window_name을 이름으로 하는 윈도우를 만들어 놓음으로써 해당 윈도우에 트랙바를 달 수 있게 함
-window_name = 'result'
-
 cv2.imshow("original", utils.resize(img, width=600))
 cv2.imshow("vertical", utils.resize(img3, width=600))
 cv2.imshow("horizontal", utils.resize(img2, width=600))
-cv2.imshow(window_name, utils.resize(result, width=600))
+cv2.imshow("result", utils.resize(result, width=600))
 cv2.waitKey(0)

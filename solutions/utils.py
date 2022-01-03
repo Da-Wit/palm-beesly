@@ -8,7 +8,6 @@ import numpy as np
 
 
 def resize(image, width=None, height=None, inter=cv2.INTER_AREA):
-    dim = None
     (h, w) = image.shape[:2]
 
     if width is None and height is None:
@@ -22,7 +21,7 @@ def resize(image, width=None, height=None, inter=cv2.INTER_AREA):
     return cv2.resize(image, dim, interpolation=inter)
 
 
-def get_distance(coord1, coord2):
+def distance_between(coord1, coord2):
     return ((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2) ** (1 / 2)
 
 
@@ -30,7 +29,7 @@ def get_distance(coord1, coord2):
 # 기울기를 구하는  분모가 0이 될 수 있어서, 분모에 1e-9(적당히 작은 값)를 더했다.
 
 
-def get_gradient(coord1, coord2):
+def get_slope(coord1, coord2):
     return (coord1[1] - coord2[1]) / ((coord1[0] - coord2[0]) + 10 ** (-9))
 
 
@@ -56,114 +55,6 @@ def threshold(image):
     return ret, thresh
 
 
-# coord1(좌표1)과 coord2(좌표2)를 인수로 받아서
-# 연장선(좌표1과 좌표2 사이의 거리만큼 좌표1 쪽으로
-# 연장한 선), 즉, x가 연장선 끝쪽의 점이라고 하면
-# x와 좌표1 사이의 거리와 좌표1과 좌표2 사이의 거리가
-# 같고 그 둘의 기울기또한 같다.
-# 그래서 x와 좌표1을 서로 이웃하지 않는 직사각형의
-# 점으로 놓을 때, 그 직사각형 안의 cnt 좌표들 중,
-# 가장 기울기가 좌표1, 좌표2 사이의 기울기와 가까운
-# 좌표를 반환한다.
-# coord1 is closer to cnt than coord2
-
-
-def aws(image, cnt, coord1, coord2):
-    degree = get_gradient(coord1, coord2)
-    # luxk is a coordinate on a linear equation
-    # that includes both of coord1 and coord2.
-    # Distance of luxk-coord1 and
-    # distance of coord1-coord2 are same.
-    # Also, luxk is closer to coord1 than coord2.
-    luxk = np.array([2 * coord1[0] - coord2[0], 2 * coord1[1] - coord2[1]])
-
-    if coord1[0] > luxk[0]:
-        bigger_x = coord1[0]
-        smaller_x = luxk[0]
-    else:
-        bigger_x = luxk[0]
-        smaller_x = coord1[0]
-
-    if coord1[1] > luxk[1]:
-        bigger_y = coord1[1]
-        smaller_y = luxk[1]
-    else:
-        bigger_y = luxk[1]
-        smaller_y = coord1[1]
-
-    min_degree_gap = 999999999999
-    coord_of_min_degree_gap = np.array([0, 0])
-    for [[cnt_x, cnt_y]] in cnt:
-        if cnt_x <= bigger_x and cnt_x >= smaller_x and cnt_y <= bigger_y and cnt_y >= smaller_y:
-            degree_gap = abs(get_gradient(
-                np.array([cnt_x, cnt_y]), coord1) - degree)
-            if degree_gap < min_degree_gap:
-                min_degree_gap = degree_gap
-                coord_of_min_degree_gap = np.array([cnt_x, cnt_y])
-    return coord_of_min_degree_gap
-
-
-# coord1 is closer to cnt than coord2
-
-# aws와 거의 유사하지만 aws는 가장 기울기 차가
-# 작은 cnt 좌표를 반환하지만 이 함수는 일정 수준
-# 보다 더 기울기 차가 작을 경우 해당하는 좌표들을
-# 모두 한 배열에 넣은 뒤, 그 배열 중 좌표1과의
-# 거리가 가장 가까운 좌표를 반환한다.
-# 하지만 aws_new는 현재 사용되지는 않는다.
-
-
-def aws_new(image, cnt, coord1, coord2):
-    degree = get_gradient(coord1, coord2)
-    # luxk is a coordinate on a straight line
-    # that includes both of coord1 and coord2.
-    # Distance of luxk-coord1 and
-    # distance of coord1-coord2 are same.
-    # Also, luxk is closer to coord1 than coord2.
-    luxk = np.array([2 * coord1[0] - coord2[0], 2 * coord1[1] - coord2[1]])
-
-    if coord1[0] > luxk[0]:
-        bigger_x = coord1[0]
-        smaller_x = luxk[0]
-    else:
-        bigger_x = luxk[0]
-        smaller_x = coord1[0]
-
-    if coord1[1] > luxk[1]:
-        bigger_y = coord1[1]
-        smaller_y = luxk[1]
-    else:
-        bigger_y = luxk[1]
-        smaller_y = coord1[1]
-
-    degree_gap_criteria = 0.08
-    coords_on_line = np.zeros((0, 2), dtype=np.int32)
-    count = 0
-
-    for [[cnt_x, cnt_y]] in cnt:
-        if cnt_x <= bigger_x and cnt_x >= smaller_x and cnt_y <= bigger_y and cnt_y >= smaller_y:
-            count += 1
-            degree_gap = abs(get_gradient(
-                np.array([cnt_x, cnt_y]), coord1) - degree)
-            if degree_gap < degree_gap_criteria:
-                coords_on_line = np.append(
-                    coords_on_line, [[cnt_x, cnt_y]], axis=0)
-                # coord_of_min_degree_gap = np.array([cnt_x, cnt_y])
-
-    # if len(coords_on_line) == 0:
-    #     raise Exception('Length of coords_on_line is 0. Fix this function.')
-    #     return -1
-    min_distance = 999
-    result = np.zeros((2), dtype=np.int32)
-    for coord in coords_on_line:
-        distance = get_distance(coord, coord1)
-        if distance < min_distance:
-            min_distance = distance
-            result = coord
-
-    return result
-
-
 # 제일 큰 contours를 구해주는 함수
 # max contour를 구하는 이유는
 # background에 손 말고 이상한 것들이 남아있는 경우가 많음
@@ -173,7 +64,7 @@ def get_max_contour(contours):
     maxcnt = None
     for cnt in contours:
         area = cv2.contourArea(cnt)
-        if (max < area):
+        if max < area:
             max = area
             maxcnt = cnt
     return maxcnt
@@ -207,9 +98,6 @@ def get_hand_form(image, mp_hands):
             static_image_mode=True,
             max_num_hands=1,
             min_detection_confidence=0.5) as hands:
-        # Flip image around y-axis for correct handedness output
-        img = cv2.flip(image, 1)
-
         # Convert the BGR image to RGB before processing.
         results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
 
@@ -225,7 +113,7 @@ def get_contour(image):
     return get_max_contour(contours)
 
 
-def get_part_of_contour(image, contour, coord1, coord2):
+def get_part_of_contour(contour, coord1, coord2):
     # make iterable coords tuple to execute for loop
     coords = (coord1, coord2)
     indices_of_coords = np.zeros((2, 3), dtype=np.int32)
@@ -242,15 +130,15 @@ def get_part_of_contour(image, contour, coord1, coord2):
     if indices_of_coords[0][0] < indices_of_coords[1][0]:
         smaller_index = indices_of_coords[0][0]
         bigger_index = indices_of_coords[1][0]
-        isCoord1IndexBiggerThanCoord2Index = False
+        is_coord1_idx_bigger = False
     else:
         smaller_index = indices_of_coords[1][0]
         bigger_index = indices_of_coords[0][0]
-        isCoord1IndexBiggerThanCoord2Index = True
+        is_coord1_idx_bigger = True
 
     part_of_contour = contour[smaller_index:bigger_index + 1]
 
-    if isCoord1IndexBiggerThanCoord2Index != True:
+    if is_coord1_idx_bigger is False:
         part_of_contour = np.flipud(part_of_contour)
 
     return part_of_contour
