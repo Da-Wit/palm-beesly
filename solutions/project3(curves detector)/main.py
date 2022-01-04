@@ -61,7 +61,7 @@ def get_roi(img, min_grayscale=0):
 
 
 # 한 방향으로의 hline들의 리스트, nline을 리턴함
-def find_one_orientation_lines(img_param, min_grayscale, max_line_distance, is_horizontal):
+def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line_distance, is_horizontal):
     h, w = img_param.shape[:2]
     if is_horizontal:
         first_for_loop_max = w
@@ -81,12 +81,12 @@ def find_one_orientation_lines(img_param, min_grayscale, max_line_distance, is_h
             else:
                 x = j
                 y = i
-            if img_param[y][x] > min_grayscale and find is False:
+            if img_param[y][x] > min_grayscale and img_param[y][x] < max_grayscale and find is False:
                 find = True
                 lines.handle_point([x, y], max_line_distance)
                 prev_j = j
 
-            elif img_param[y][x] <= min_grayscale and find is True:
+            elif (img_param[y][x] <= min_grayscale or img_param[y][x] >= max_grayscale) and find is True:
                 find = False
                 if j - prev_j > min_j_gap:
                     lines.handle_point([x, y], max_line_distance)
@@ -95,30 +95,34 @@ def find_one_orientation_lines(img_param, min_grayscale, max_line_distance, is_h
 
 
 # find_one_orientation_lines 함수를 사용해 가로선 nline 찾기
-def find_horizontal_lines(img_param, min_grayscale, max_line_distance):
-    return find_one_orientation_lines(img_param, min_grayscale, max_line_distance,
+def find_horizontal_lines(img_param, min_grayscale, max_grayscale, max_line_distance):
+    return find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line_distance,
                                       is_horizontal=True)
 
 
 # find_one_orientation_lines 함수를 사용해 세로선 nline 찾기
-def find_vertical_lines(img_param, min_grayscale, max_line_distance):
-    return find_one_orientation_lines(img_param, min_grayscale, max_line_distance,
+def find_vertical_lines(img_param, min_grayscale, max_grayscale, max_line_distance):
+    return find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line_distance,
                                       is_horizontal=False)
 
 
 # 이미지와 값 조정 변수를 넣어주면 최종적으로 시각화된 이미지를 가로, 세로로 나눠 리턴함
 # 외부에서 최종적으로 사용할 함수
-def main(img_param, min_grayscale, min_line_length, max_line_distance=3):
-    height, width = img_param.shape[:2]
+def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_distance=3, number_of_lines_to_leave=10):
+    cropped = get_roi(img_param, min_grayscale)
+    height, width = cropped.shape[:2]
 
     horizontal_img = np.zeros((height, width, 1), dtype=np.uint8)
     vertical_img = np.zeros((height, width, 1), dtype=np.uint8)
 
-    horizontal_lines = find_horizontal_lines(img, min_grayscale, max_line_distance)
-    vertical_lines = find_vertical_lines(img, min_grayscale, max_line_distance)
+    horizontal_lines = find_horizontal_lines(cropped, min_grayscale, max_grayscale, max_line_distance)
+    vertical_lines = find_vertical_lines(cropped, min_grayscale, max_grayscale, max_line_distance)
 
     horizontal_lines.filter_by_line_length(min_line_length)
     vertical_lines.filter_by_line_length(min_line_length)
+
+    horizontal_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
+    vertical_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
 
     horizontal_img = horizontal_lines.visualize_lines(horizontal_img, imshow=False, color=True)
     vertical_img = vertical_lines.visualize_lines(vertical_img, imshow=False, color=True)
@@ -126,32 +130,36 @@ def main(img_param, min_grayscale, min_line_length, max_line_distance=3):
     return horizontal_img, vertical_img
 
 
-image_path = "C:/Users/USER/workspace/palm/test_img/edit2.png"
+image_path = "C:/Users/USER/workspace/palm/test_img/edit6.png"
 img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
 if img is None:
     print("Image is empty!!")
-    exit(0)
-
-img = get_roi(img)
+    exit(1)
 
 # Default value is 0
 # min_grayscale = 63
 min_grayscale = 70
 
+max_grayscale = 160
+
 # The minimum number of dots in one line
 # Default value is 4
-min_line_length = 6
+min_line_length = 10
 
 # Default value is 3
-max_line_distance = 6
+max_line_distance = 3
 
-img2, img3 = main(img, min_grayscale, min_line_length, max_line_distance)
+number_of_lines_to_leave = 1
+
+img2, img3 = main(img, min_grayscale, max_grayscale, min_line_length, max_line_distance, number_of_lines_to_leave)
 
 result = img2 + img3
 
+# TODO leave_long_lines으로 제일 긴 라인만 띄웠을 때 하나의 선이 이미지 곳곳에서 군데군데 띄엄띄엄 나타나는 문제가 있음 
 cv2.imshow("original", utils.resize(img, width=600))
 cv2.imshow("vertical", utils.resize(img3, width=600))
 cv2.imshow("horizontal", utils.resize(img2, width=600))
 cv2.imshow("result", utils.resize(result, width=600))
+
 cv2.waitKey(0)

@@ -120,7 +120,7 @@ class HPF:
         # 예외처리
         if not isinstance(filter_type, HPF_type):
             print('Given HPF type is not supported.')
-            exit(0)
+            exit(1)
 
         self.kernel = HPF_kernel[filter_type]
 
@@ -128,11 +128,9 @@ class HPF:
         gaussian_checker = self.check_gaussian(gaussian)
 
         if alpha_checker is not None:
-            print(alpha_checker)
-            exit(0)
+            exit(1)
         if gaussian_checker is not None:
-            print(gaussian_checker)
-            exit(0)
+            exit(1)
 
         # 트랙바에 해당하는 값들을 실제 필터링, 가우시안 블러에 사용하는 값으로 연산해서 클래스에 저장
         self.alpha = alpha / self.kernel[DIVIDER]
@@ -187,7 +185,7 @@ class HPF:
 
             if alpha_checker is not None:
                 print(alpha_checker)
-                exit(0)
+                exit(1)
 
             self.alpha = alpha / self.kernel[DIVIDER]
 
@@ -195,8 +193,7 @@ class HPF:
             gaussian_checker = self.check_gaussian(gaussian)
 
             if gaussian_checker is not None:
-                print(gaussian_checker)
-                exit(0)
+                exit(1)
 
             self.gaussian_ksize = (gaussian * 2) + 1
 
@@ -213,7 +210,7 @@ img = cv2.imread(image_path)
 
 if img is None:
     print("Image is empty!!")
-    exit(0)
+    exit(1)
 # alpha(HPF의 2번째 인자)는 트랙바에서처럼 필터마다 최대값이 다른고 0 ~ max_sobel_alpha 혹은 0 ~ max_scharr_alpha이어야 함
 # gaussian(HPF의 3번째 인자)은 트랙바에서처럼 0~10만 가능함
 

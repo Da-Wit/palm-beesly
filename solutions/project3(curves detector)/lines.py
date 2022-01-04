@@ -113,9 +113,25 @@ class Lines:
 
             if imshow:
                 cv2.imshow("img_on_progress", utils.resize(copied_img, width=600))
-
                 k = cv2.waitKey(0)
                 if k == 27:  # Esc key to stop
                     cv2.destroyAllWindows()
                     exit(0)
         return copied_img
+
+    def sort(self):
+        line_list = copy.deepcopy(self.line_list)
+
+        def criteria(l):
+            return len(l.point_list)
+
+        line_list.sort(reverse=True, key=criteria)
+        self.line_list = line_list
+
+    def leave_long_lines(self, number_of_lines_to_leave=10):
+        self.sort()
+
+        if number_of_lines_to_leave > len(self.line_list):
+            print("lines_left can't be larger than length of line_list.")
+            exit(1)
+        self.line_list = self.line_list[:number_of_lines_to_leave]
