@@ -1,4 +1,5 @@
 from lineone import LineOne
+import numpy as np
 import random
 import copy
 import cv2
@@ -98,26 +99,36 @@ class Lines:
 
     def visualize_lines(self, img_param, imshow=False, color=False):
         copied_img = copy.deepcopy(img_param)
+        height, width = copied_img.shape[:2]
+
         if color:
             copied_img = cv2.cvtColor(copied_img, cv2.COLOR_GRAY2BGR)
+            temp = np.zeros((height, width, 3), dtype=np.uint8)
+        else:
+            temp = np.zeros((height, width, 1), dtype=np.uint8)
 
         for lineOne in self.line_list:
+            temp = temp * 0
             for point in lineOne.point_list:
+
                 x = point[0]
                 y = point[1]
 
                 if color:
-                    copied_img[y][x] = lineOne.color
+                    temp[y][x] = lineOne.color
                 else:
-                    copied_img[y][x] = 255
+                    temp[y][x] = 255
+
+            copied_img = copied_img + temp
 
             if imshow:
-                cv2.imshow("img_on_progress", utils.resize(copied_img, width=600))
+                cv2.imshow("img_on_progress", utils.resize(temp, width=600))
                 k = cv2.waitKey(0)
                 if k == 27:  # Esc key to stop
                     cv2.destroyAllWindows()
                     exit(0)
-        return copied_img
+                    
+        return copied_img + temp
 
     def sort(self):
         line_list = copy.deepcopy(self.line_list)

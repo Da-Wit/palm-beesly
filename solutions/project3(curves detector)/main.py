@@ -150,13 +150,13 @@ min_line_length = 10
 # Default value is 3
 max_line_distance = 3
 
-number_of_lines_to_leave = 1
+number_of_lines_to_leave = 4
 
 img2, img3 = main(img, min_grayscale, max_grayscale, min_line_length, max_line_distance, number_of_lines_to_leave)
 
 result = img2 + img3
 
-# TODO leave_long_lines으로 제일 긴 라인만 띄웠을 때 하나의 선이 이미지 곳곳에서 군데군데 띄엄띄엄 나타나는 문제가 있음 
+# TODO leave_long_lines으로 제일 긴 라인만 띄웠을 때 하나의 선이 이미지 곳곳에서 군데군데 띄엄띄엄 나타나는 문제가 있음
 cv2.imshow("original", utils.resize(img, width=600))
 cv2.imshow("vertical", utils.resize(img3, width=600))
 cv2.imshow("horizontal", utils.resize(img2, width=600))
