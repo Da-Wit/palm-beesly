@@ -3,6 +3,9 @@ import copy
 import solutions.utils as utils
 from lines import Lines
 import numpy as np
+import timeit
+
+start = timeit.default_timer()
 
 
 # 인풋으로 받은 캐니처리만 된 이미지에서 좌, 우, 위, 아래로 grayscle값이
@@ -184,6 +187,10 @@ img2, img3 = main(img, min_grayscale, max_grayscale,
                   min_line_length, max_line_distance, number_of_lines_to_leave)
 
 result = img2 + img3
+
+stop = timeit.default_timer()
+
+print('Time: ', stop - start)
 
 # cv2.imshow("original", utils.resize(img, width=600))
 cv2.imshow("vertical", utils.resize(img3, width=600))
