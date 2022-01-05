@@ -63,8 +63,13 @@ def get_roi(img, min_grayscale=0):
 # 한 방향으로의 hline들의 리스트, nline을 리턴함
 def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line_distance, is_horizontal):
     h, w = img_param.shape[:2]
+
+    zoom = 8
+    skip = False
+
     for_debugging = copy.deepcopy(img_param) * 0
     for_debugging = cv2.cvtColor(for_debugging, cv2.COLOR_GRAY2RGB)
+    for_debugging = utils.resize(for_debugging, height=h * zoom)
 
     if is_horizontal:
         first_for_loop_max = w
@@ -86,34 +91,37 @@ def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line
                 y = i
             if img_param[y][x] > min_grayscale and img_param[y][x] < max_grayscale and find is False:
                 find = True
-                lines.handle_point([x, y], max_line_distance, for_debugging)
+                lines.handle_point(
+                    [x, y], max_line_distance, for_debugging, zoom)
                 prev_j = j
 
             elif (img_param[y][x] <= min_grayscale or img_param[y][x] >= max_grayscale) and find is True:
                 find = False
                 if j - prev_j > min_j_gap:
-                    lines.handle_point([x, y], max_line_distance, for_debugging)
+                    lines.handle_point(
+                        [x, y], max_line_distance, for_debugging, zoom)
 
             # previous = copy.deepcopy(for_debugging[y][x])
             # for_debugging[y][x] = [0, 0, 255]
             # cv2.imshow("img_on_progress", utils.resize(for_debugging, height=1000))
             # for_debugging[y][x] = previous
+            if skip is False:
+                for_showing = copy.deepcopy(for_debugging)
 
-            zoom = 1
+                for_showing[y * zoom][x * zoom] = [0, 0, 255]
 
-            for_showing = copy.deepcopy(for_debugging)
+                cv2.circle(for_showing, (x * zoom, y * zoom),
+                           max_line_distance * zoom, (0, 0, 255), 1)
 
-            for_showing = utils.resize(for_showing, height=h * zoom)
-            for_showing[y * zoom][x * zoom] = [0, 0, 255]
+                cv2.imshow("img_on_progress", for_showing)
 
-            cv2.circle(for_showing, (x * zoom, y * zoom), max_line_distance * zoom, (0, 0, 255), 1)
+                k = cv2.waitKey(0)
 
-            cv2.imshow("img_on_progress", for_showing)
-
-            k = cv2.waitKey(0)
-            if k == 27:  # Esc key to stop
-                cv2.destroyAllWindows()
-                exit(0)
+                if k == 110:  # n key to skip
+                    skip = True
+                if k == 27:  # Esc key to stop
+                    cv2.destroyAllWindows()
+                    exit(0)
 
     return lines
 
@@ -139,17 +147,23 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     horizontal_img = np.zeros((height, width, 1), dtype=np.uint8)
     vertical_img = np.zeros((height, width, 1), dtype=np.uint8)
 
-    horizontal_lines = find_horizontal_lines(cropped, min_grayscale, max_grayscale, max_line_distance)
-    vertical_lines = find_vertical_lines(cropped, min_grayscale, max_grayscale, max_line_distance)
+    horizontal_lines = find_horizontal_lines(
+        cropped, min_grayscale, max_grayscale, max_line_distance)
+    vertical_lines = find_vertical_lines(
+        cropped, min_grayscale, max_grayscale, max_line_distance)
 
-    horizontal_lines.filter_by_line_length(min_line_length)
-    vertical_lines.filter_by_line_length(min_line_length)
+    # horizontal_lines.filter_by_line_length(min_line_length)
+    # vertical_lines.filter_by_line_length(min_line_length)
 
-    horizontal_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
-    vertical_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
+    horizontal_lines.leave_long_lines(
+        number_of_lines_to_leave=number_of_lines_to_leave)
+    vertical_lines.leave_long_lines(
+        number_of_lines_to_leave=number_of_lines_to_leave)
 
-    horizontal_img = horizontal_lines.visualize_lines(horizontal_img, imshow=False, color=True)
-    vertical_img = vertical_lines.visualize_lines(vertical_img, imshow=False, color=True)
+    horizontal_img = horizontal_lines.visualize_lines(
+        horizontal_img, imshow=False, color=True)
+    vertical_img = vertical_lines.visualize_lines(
+        vertical_img, imshow=False, color=True)
 
     return horizontal_img, vertical_img
 
@@ -174,13 +188,13 @@ min_line_length = 10
 # Default value is 3
 max_line_distance = 3
 
-number_of_lines_to_leave = 2
+number_of_lines_to_leave = 30
 
-img2, img3 = main(img, min_grayscale, max_grayscale, min_line_length, max_line_distance, number_of_lines_to_leave)
+img2, img3 = main(img, min_grayscale, max_grayscale,
+                  min_line_length, max_line_distance, number_of_lines_to_leave)
 
 result = img2 + img3
 
-# TODO leave_long_lines으로 제일 긴 라인만 띄웠을 때 하나의 선이 이미지 곳곳에서 군데군데 띄엄띄엄 나타나는 문제가 있음
 # cv2.imshow("original", utils.resize(img, width=600))
 cv2.imshow("vertical", utils.resize(img3, width=600))
 cv2.imshow("horizontal", utils.resize(img2, width=600))

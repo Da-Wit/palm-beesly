@@ -7,6 +7,7 @@ class LineOne:
         self.point_list = []
         self.own_slope = -1
         self.number_of_front_points_to_find_slope = number_of_front_points_to_find_slope
+        self.changed_after_calculating_slope = True
 
         # color는 디버깅 용으로 hline별로 쉽게 구별하기 위해 넣은 변수임
         # TODO 실제 개발 완료 시 color 멤버 변수 제거하기
@@ -20,6 +21,7 @@ class LineOne:
     def add_point(self, point):
         self.point_list.append(point)
 
+    # TODO for문 2중으로 돌면서 is_continuable 실행할 건데 max_distance 거리 벗어난 내부 점들은 연산에 포함시키지 않도록 바꾸기
     def is_continuable(self, external_point, max_distance=3):
         for idx in range(len(self.point_list)):
             current_point = self.point_list[idx]
@@ -34,12 +36,14 @@ class LineOne:
         return True
 
     def calculate_own_slope(self):
+        point_list = self.point_list[-self.number_of_front_points_to_find_slope:]
+
         half = round(self.number_of_front_points_to_find_slope / 2)
         sum_gradient = 0
 
         for idx in range(half):
-            front_point = self.point_list[idx]
-            back_point = self.point_list[idx + half]
+            front_point = point_list[idx]
+            back_point = point_list[idx + half]
 
             sum_gradient = sum_gradient + utils.get_slope(front_point, back_point)
 

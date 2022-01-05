@@ -5,6 +5,8 @@ import copy
 import cv2
 import solutions.utils as utils
 
+clear = "\n" * 100
+
 
 class Lines:
     def __init__(self):
@@ -14,7 +16,7 @@ class Lines:
     def add_line(self, line):
         self.line_list.append(line)
 
-    def get_indices_of_nearby_lines(self, point, max_distance):
+    def get_index_list_of_close_lines(self, point, max_distance):
         index_list = []
         for idx in range(len(self.line_list)):
             is_continuable = self.line_list[idx].is_continuable(point, max_distance)
@@ -35,68 +37,77 @@ class Lines:
 
         return find
 
-    def handle_point(self, point, max_distance, for_debugging):
-        close_lines = self.get_indices_of_nearby_lines(point, max_distance)
-        length_of_close_lines = len(close_lines)
+    def handle_point(self, point, max_distance, for_debugging, zoom):
+        print(clear)
+
+        list_of_index_of_close_lines = self.get_index_list_of_close_lines(point, max_distance)
+        number_of_close_lines = len(list_of_index_of_close_lines)
         x, y = point
 
         # 점 주변에 선이 0개일 때
         # 새로운 hline 만들어서 nline에 append
         # 즉, 새로운 선 발견했다고 추정해 새로운 선 추가
-        if length_of_close_lines == 0:
+        if number_of_close_lines == 0:
+            print("line found")
             lineOne = LineOne(self.number_of_front_points_to_find_slope)
             self.add_line(lineOne)
             lineOne.add_point(point)
 
-            for_debugging[y][x] = copy.deepcopy(lineOne.color)
+            cv2.circle(for_debugging, (x * zoom, y * zoom), 0, lineOne.color, 2)
 
         # 점 주변에 선이 1개일 때
         # 그 1개의 선에 점 추가
-        elif length_of_close_lines == 1:
-            lineOne = self.line_list[close_lines[0]]
+        elif number_of_close_lines == 1:
+            print("near 1")
+            index = list_of_index_of_close_lines[0]
+            lineOne = self.line_list[index]
             lineOne.add_point(point)
 
-            for_debugging[y][x] = copy.deepcopy(lineOne.color)
+            cv2.circle(for_debugging, (x * zoom, y * zoom), 0, lineOne.color, 2)
 
         # 점 주변에 선이 1개보다 많을 때
         # 기울기로 구함
         else:
+            print(f"near {number_of_close_lines}")
             filtered_lines = []
 
-            for i in range(length_of_close_lines):
-                hline = self.line_list[close_lines[i]]
+            for index_of_line in list_of_index_of_close_lines:
+                lineOne = self.line_list[index_of_line]
 
-                if len(hline.point_list) < self.number_of_front_points_to_find_slope:
+                if len(lineOne.point_list) < self.number_of_front_points_to_find_slope:
                     continue
-                elif hline.have_own_slope() is False:
-                    hline.calculate_own_slope()
+                elif lineOne.have_own_slope() is False or lineOne.changed_after_calculating_slope is True:
+                    lineOne.calculate_own_slope()
+                    lineOne.changed_after_calculating_slope = False
 
-                gradient_with_xy = hline.avg_slope_with(point)
-                lines_own_gradient = hline.own_slope
-                gap = abs(gradient_with_xy - lines_own_gradient)
-                filtered_lines.append({"index": close_lines[i], "gap": gap})
+                slope_related_to_xy = lineOne.avg_slope_with(point)
+                line_own_slope = lineOne.own_slope
+                gap = abs(slope_related_to_xy - line_own_slope)
+                filtered_lines.append({"index": index_of_line, "gap": gap})
 
             # TODO 랜덤이 아닌 합리적인 방법으로 추가할 선 선택하기
             # 모든 선이 기울기를 구할 수 없을 때
             # 무작위 선 하나에 점을 추가
             if len(filtered_lines) == 0:
-                random_index = random.randint(0, length_of_close_lines - 1)
-                self.line_list[close_lines[random_index]].add_point(point)
+                print("random")
 
-                for_debugging[y][x] = copy.deepcopy(self.line_list[close_lines[random_index]].color)
+                random_index = random.randint(0, number_of_close_lines - 1)
+                self.line_list[list_of_index_of_close_lines[random_index]].add_point(point)
 
+                cv2.circle(for_debugging, (x * zoom, y * zoom), 0,
+                           self.line_list[list_of_index_of_close_lines[random_index]].color, 2)
 
             else:
+                print("by gap")
                 min_gap = filtered_lines[0]['gap']
-                min_gap_idx = 0
-                for i in range(1, len(filtered_lines)):
-                    if min_gap > filtered_lines[i]['gap']:
-                        min_gap = filtered_lines[i]['gap']
-                        min_gap_idx = i
+                min_gap_idx = filtered_lines[0]['index']
+                for index_of_line in range(1, len(filtered_lines)):
+                    if min_gap > filtered_lines[index_of_line]['gap']:
+                        min_gap = filtered_lines[index_of_line]['gap']
+                        min_gap_idx = filtered_lines[index_of_line]['index']
 
                 self.line_list[min_gap_idx].add_point(point)
-
-                for_debugging[y][x] = copy.deepcopy(self.line_list[min_gap_idx].color)
+                cv2.circle(for_debugging, (x * zoom, y * zoom), 0, self.line_list[min_gap_idx].color, 2)
 
     def filter_by_line_length(self, min_length):
         line_list = copy.deepcopy(self.line_list)
