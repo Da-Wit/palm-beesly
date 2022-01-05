@@ -63,6 +63,9 @@ def get_roi(img, min_grayscale=0):
 # 한 방향으로의 hline들의 리스트, nline을 리턴함
 def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line_distance, is_horizontal):
     h, w = img_param.shape[:2]
+    for_debugging = copy.deepcopy(img_param) * 0
+    for_debugging = cv2.cvtColor(for_debugging, cv2.COLOR_GRAY2RGB)
+
     if is_horizontal:
         first_for_loop_max = w
         second_for_loop_max = h
@@ -83,13 +86,34 @@ def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line
                 y = i
             if img_param[y][x] > min_grayscale and img_param[y][x] < max_grayscale and find is False:
                 find = True
-                lines.handle_point([x, y], max_line_distance)
+                lines.handle_point([x, y], max_line_distance, for_debugging)
                 prev_j = j
 
             elif (img_param[y][x] <= min_grayscale or img_param[y][x] >= max_grayscale) and find is True:
                 find = False
                 if j - prev_j > min_j_gap:
-                    lines.handle_point([x, y], max_line_distance)
+                    lines.handle_point([x, y], max_line_distance, for_debugging)
+
+            # previous = copy.deepcopy(for_debugging[y][x])
+            # for_debugging[y][x] = [0, 0, 255]
+            # cv2.imshow("img_on_progress", utils.resize(for_debugging, height=1000))
+            # for_debugging[y][x] = previous
+
+            zoom = 1
+
+            for_showing = copy.deepcopy(for_debugging)
+
+            for_showing = utils.resize(for_showing, height=h * zoom)
+            for_showing[y * zoom][x * zoom] = [0, 0, 255]
+
+            cv2.circle(for_showing, (x * zoom, y * zoom), max_line_distance * zoom, (0, 0, 255), 1)
+
+            cv2.imshow("img_on_progress", for_showing)
+
+            k = cv2.waitKey(0)
+            if k == 27:  # Esc key to stop
+                cv2.destroyAllWindows()
+                exit(0)
 
     return lines
 
@@ -130,7 +154,7 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     return horizontal_img, vertical_img
 
 
-image_path = "C:/Users/USER/workspace/palm/test_img/edit6.png"
+image_path = "C:/Users/USER/workspace/palm/test_img/edit5.png"
 img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
 if img is None:
@@ -150,16 +174,16 @@ min_line_length = 10
 # Default value is 3
 max_line_distance = 3
 
-number_of_lines_to_leave = 4
+number_of_lines_to_leave = 2
 
 img2, img3 = main(img, min_grayscale, max_grayscale, min_line_length, max_line_distance, number_of_lines_to_leave)
 
 result = img2 + img3
 
 # TODO leave_long_lines으로 제일 긴 라인만 띄웠을 때 하나의 선이 이미지 곳곳에서 군데군데 띄엄띄엄 나타나는 문제가 있음
-cv2.imshow("original", utils.resize(img, width=600))
+# cv2.imshow("original", utils.resize(img, width=600))
 cv2.imshow("vertical", utils.resize(img3, width=600))
 cv2.imshow("horizontal", utils.resize(img2, width=600))
-cv2.imshow("result", utils.resize(result, width=600))
+# cv2.imshow("result", utils.resize(result, width=600))
 
 cv2.waitKey(0)

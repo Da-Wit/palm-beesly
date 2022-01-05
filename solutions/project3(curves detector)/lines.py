@@ -35,9 +35,10 @@ class Lines:
 
         return find
 
-    def handle_point(self, point, max_distance):
+    def handle_point(self, point, max_distance, for_debugging):
         close_lines = self.get_indices_of_nearby_lines(point, max_distance)
         length_of_close_lines = len(close_lines)
+        x, y = point
 
         # 점 주변에 선이 0개일 때
         # 새로운 hline 만들어서 nline에 append
@@ -47,12 +48,15 @@ class Lines:
             self.add_line(lineOne)
             lineOne.add_point(point)
 
+            for_debugging[y][x] = copy.deepcopy(lineOne.color)
+
         # 점 주변에 선이 1개일 때
         # 그 1개의 선에 점 추가
         elif length_of_close_lines == 1:
             lineOne = self.line_list[close_lines[0]]
             lineOne.add_point(point)
 
+            for_debugging[y][x] = copy.deepcopy(lineOne.color)
 
         # 점 주변에 선이 1개보다 많을 때
         # 기울기로 구함
@@ -79,6 +83,8 @@ class Lines:
                 random_index = random.randint(0, length_of_close_lines - 1)
                 self.line_list[close_lines[random_index]].add_point(point)
 
+                for_debugging[y][x] = copy.deepcopy(self.line_list[close_lines[random_index]].color)
+
 
             else:
                 min_gap = filtered_lines[0]['gap']
@@ -89,6 +95,8 @@ class Lines:
                         min_gap_idx = i
 
                 self.line_list[min_gap_idx].add_point(point)
+
+                for_debugging[y][x] = copy.deepcopy(self.line_list[min_gap_idx].color)
 
     def filter_by_line_length(self, min_length):
         line_list = copy.deepcopy(self.line_list)
@@ -127,7 +135,7 @@ class Lines:
                 if k == 27:  # Esc key to stop
                     cv2.destroyAllWindows()
                     exit(0)
-                    
+
         return copied_img + temp
 
     def sort(self):
@@ -143,6 +151,6 @@ class Lines:
         self.sort()
 
         if number_of_lines_to_leave > len(self.line_list):
-            print("lines_left can't be larger than length of line_list.")
+            print("number_of_lines_to_leave can't be larger than length of line_list.")
             exit(1)
         self.line_list = self.line_list[:number_of_lines_to_leave]
