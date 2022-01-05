@@ -38,7 +38,7 @@ class Lines:
         return find
 
     def handle_point(self, point, max_distance, for_debugging, zoom):
-        print(clear)
+        # print(clear)
 
         list_of_index_of_close_lines = self.get_index_list_of_close_lines(point, max_distance)
         number_of_close_lines = len(list_of_index_of_close_lines)
@@ -48,7 +48,7 @@ class Lines:
         # 새로운 hline 만들어서 nline에 append
         # 즉, 새로운 선 발견했다고 추정해 새로운 선 추가
         if number_of_close_lines == 0:
-            print("line found")
+            # print("line found")
             lineOne = LineOne(self.number_of_front_points_to_find_slope)
             self.add_line(lineOne)
             lineOne.add_point(point)
@@ -58,7 +58,7 @@ class Lines:
         # 점 주변에 선이 1개일 때
         # 그 1개의 선에 점 추가
         elif number_of_close_lines == 1:
-            print("near 1")
+            # print("near 1")
             index = list_of_index_of_close_lines[0]
             lineOne = self.line_list[index]
             lineOne.add_point(point)
@@ -68,7 +68,7 @@ class Lines:
         # 점 주변에 선이 1개보다 많을 때
         # 기울기로 구함
         else:
-            print(f"near {number_of_close_lines}")
+            # print(f"near {number_of_close_lines}")
             filtered_lines = []
 
             for index_of_line in list_of_index_of_close_lines:
@@ -89,7 +89,7 @@ class Lines:
             # 모든 선이 기울기를 구할 수 없을 때
             # 무작위 선 하나에 점을 추가
             if len(filtered_lines) == 0:
-                print("random")
+                # print("random")
 
                 random_index = random.randint(0, number_of_close_lines - 1)
                 self.line_list[list_of_index_of_close_lines[random_index]].add_point(point)
@@ -98,7 +98,7 @@ class Lines:
                            self.line_list[list_of_index_of_close_lines[random_index]].color, 2)
 
             else:
-                print("by gap")
+                # print("by gap")
                 min_gap = filtered_lines[0]['gap']
                 min_gap_idx = filtered_lines[0]['index']
                 for index_of_line in range(1, len(filtered_lines)):

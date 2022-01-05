@@ -65,7 +65,7 @@ def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line
     h, w = img_param.shape[:2]
 
     zoom = 8
-    skip = False
+    skip = True
 
     for_debugging = copy.deepcopy(img_param) * 0
     for_debugging = cv2.cvtColor(for_debugging, cv2.COLOR_GRAY2RGB)
@@ -101,10 +101,6 @@ def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line
                     lines.handle_point(
                         [x, y], max_line_distance, for_debugging, zoom)
 
-            # previous = copy.deepcopy(for_debugging[y][x])
-            # for_debugging[y][x] = [0, 0, 255]
-            # cv2.imshow("img_on_progress", utils.resize(for_debugging, height=1000))
-            # for_debugging[y][x] = previous
             if skip is False:
                 for_showing = copy.deepcopy(for_debugging)
 
@@ -179,16 +175,16 @@ if img is None:
 # min_grayscale = 63
 min_grayscale = 70
 
-max_grayscale = 160
+max_grayscale = 200
 
 # The minimum number of dots in one line
 # Default value is 4
 min_line_length = 10
 
 # Default value is 3
-max_line_distance = 3
+max_line_distance = 5
 
-number_of_lines_to_leave = 30
+number_of_lines_to_leave = 100
 
 img2, img3 = main(img, min_grayscale, max_grayscale,
                   min_line_length, max_line_distance, number_of_lines_to_leave)
