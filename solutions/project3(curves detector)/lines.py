@@ -3,7 +3,6 @@ import numpy as np
 import random
 import copy
 import cv2
-import solutions.utils as utils
 
 clear = "\n" * 100
 
@@ -15,6 +14,10 @@ class Lines:
 
     def add_line(self, line):
         self.line_list.append(line)
+
+    def calculate_point_list_in_calculation_area_at_all_lines(self, point, max_distance):
+        for lineOne in self.line_list:
+            lineOne.calculate_point_list_in_calculation_area(point, max_distance)
 
     def get_index_list_of_close_lines(self, point, max_distance):
         index_list = []
@@ -39,6 +42,7 @@ class Lines:
 
     def handle_point(self, point, max_distance, for_debugging, zoom):
         # print(clear)
+        self.calculate_point_list_in_calculation_area_at_all_lines(point, max_distance)
 
         list_of_index_of_close_lines = self.get_index_list_of_close_lines(point, max_distance)
         number_of_close_lines = len(list_of_index_of_close_lines)
@@ -74,7 +78,7 @@ class Lines:
             for index_of_line in list_of_index_of_close_lines:
                 lineOne = self.line_list[index_of_line]
 
-                if len(lineOne.point_list) < self.number_of_front_points_to_find_slope:
+                if len(lineOne.all_point_list) < self.number_of_front_points_to_find_slope:
                     continue
                 elif lineOne.have_own_slope() is False or lineOne.changed_after_calculating_slope is True:
                     lineOne.calculate_own_slope()
@@ -112,14 +116,14 @@ class Lines:
     def filter_by_line_length(self, min_length):
         line_list = copy.deepcopy(self.line_list)
         for lineOne in line_list:
-            if len(lineOne.point_list) < min_length:
+            if len(lineOne.all_point_list) < min_length:
                 line_list.remove(lineOne)  # 길이가 3픽셀도 안되는 선은 세로선이거나 잡음이므로 지움.
         self.line_list = line_list
 
-    def visualize_lines(self, img_param, imshow=False, color=False):
+    def visualize_lines(self, img_param, color=False):
         copied_img = copy.deepcopy(img_param)
         height, width = copied_img.shape[:2]
-
+        for_showing = np.zeros((height, width, 1), dtype=np.uint8)
         if color:
             copied_img = cv2.cvtColor(copied_img, cv2.COLOR_GRAY2BGR)
             temp = np.zeros((height, width, 3), dtype=np.uint8)
@@ -128,7 +132,8 @@ class Lines:
 
         for lineOne in self.line_list:
             temp = temp * 0
-            for point in lineOne.point_list:
+            for_showing = for_showing * 0
+            for point in lineOne.all_point_list:
 
                 x = point[0]
                 y = point[1]
@@ -137,23 +142,23 @@ class Lines:
                     temp[y][x] = lineOne.color
                 else:
                     temp[y][x] = 255
+                for_showing[y][x] = 255
 
             copied_img = copied_img + temp
 
-            if imshow:
-                cv2.imshow("img_on_progress", utils.resize(temp, width=600))
-                k = cv2.waitKey(0)
-                if k == 27:  # Esc key to stop
-                    cv2.destroyAllWindows()
-                    exit(0)
+            # cv2.imshow("img_on_progress", utils.resize(for_showing, width=600))
+            # k = cv2.waitKey(0)
+            # if k == 27:  # Esc key to stop
+            #     cv2.destroyAllWindows()
+            #     exit(0)
 
         return copied_img + temp
 
     def sort(self):
         line_list = copy.deepcopy(self.line_list)
 
-        def criteria(l):
-            return len(l.point_list)
+        def criteria(lineOne):
+            return len(lineOne.all_point_list)
 
         line_list.sort(reverse=True, key=criteria)
         self.line_list = line_list

@@ -89,13 +89,13 @@ def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line
             else:
                 x = j
                 y = i
-            if img_param[y][x] > min_grayscale and img_param[y][x] < max_grayscale and find is False:
+            if img_param[y][x] > min_grayscale < max_grayscale and find is False:
                 find = True
                 lines.handle_point(
                     [x, y], max_line_distance, for_debugging, zoom)
                 prev_j = j
 
-            elif (img_param[y][x] <= min_grayscale or img_param[y][x] >= max_grayscale) and find is True:
+            elif (min_grayscale >= img_param[y][x] or img_param[y][x] >= max_grayscale) and find is True:
                 find = False
                 if j - prev_j > min_j_gap:
                     lines.handle_point(
@@ -143,23 +143,17 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     horizontal_img = np.zeros((height, width, 1), dtype=np.uint8)
     vertical_img = np.zeros((height, width, 1), dtype=np.uint8)
 
-    horizontal_lines = find_horizontal_lines(
-        cropped, min_grayscale, max_grayscale, max_line_distance)
-    vertical_lines = find_vertical_lines(
-        cropped, min_grayscale, max_grayscale, max_line_distance)
+    horizontal_lines = find_horizontal_lines(cropped, min_grayscale, max_grayscale, max_line_distance)
+    vertical_lines = find_vertical_lines(cropped, min_grayscale, max_grayscale, max_line_distance)
 
     # horizontal_lines.filter_by_line_length(min_line_length)
     # vertical_lines.filter_by_line_length(min_line_length)
 
-    horizontal_lines.leave_long_lines(
-        number_of_lines_to_leave=number_of_lines_to_leave)
-    vertical_lines.leave_long_lines(
-        number_of_lines_to_leave=number_of_lines_to_leave)
+    horizontal_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
+    vertical_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
 
-    horizontal_img = horizontal_lines.visualize_lines(
-        horizontal_img, imshow=False, color=True)
-    vertical_img = vertical_lines.visualize_lines(
-        vertical_img, imshow=False, color=True)
+    horizontal_img = horizontal_lines.visualize_lines(horizontal_img, color=True)
+    vertical_img = vertical_lines.visualize_lines(vertical_img, color=True)
 
     return horizontal_img, vertical_img
 
