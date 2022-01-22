@@ -140,7 +140,8 @@ def find_vertical_lines(img_param, min_grayscale, max_grayscale, max_line_distan
 # 이미지와 값 조정 변수를 넣어주면 최종적으로 시각화된 이미지를 가로, 세로로 나눠 리턴함
 # 외부에서 최종적으로 사용할 함수
 def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_distance=3, number_of_lines_to_leave=10):
-    cropped = get_roi(img_param, min_grayscale)
+    cropped = get_roi(img_param)
+    cv2.imshow("original",cropped)
     height, width = cropped.shape[:2]
 
     horizontal_img = np.zeros((height, width, 1), dtype=np.uint8)
@@ -161,7 +162,7 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     return horizontal_img, vertical_img
 
 
-image_path = "C:/Users/think/workspace/palm-beesly/test_img/edit5.png"
+image_path = "C:/Users/think/workspace/palm-beesly/test_img/sample5.4.png"
 img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
 if img is None:
@@ -181,7 +182,7 @@ min_line_length = 10
 # Default value is 3
 max_line_distance = 5
 
-number_of_lines_to_leave = 100
+number_of_lines_to_leave = 10
 
 img2, img3 = main(img, min_grayscale, max_grayscale,
                   min_line_length, max_line_distance, number_of_lines_to_leave)
@@ -193,8 +194,10 @@ stop = timeit.default_timer()
 print('Time: ', stop - start)
 
 # cv2.imshow("original", utils.resize(img, width=600))
-cv2.imshow("vertical", utils.resize(img3, width=600))
-cv2.imshow("horizontal", utils.resize(img2, width=600))
-# cv2.imshow("result", utils.resize(result, width=600))
+cv2.imshow("vertical", img3)
+cv2.imshow("horizontal", img2)
+# cv2.imshow("vertical", utils.resize(img3, width=600))
+# cv2.imshow("horizontal", utils.resize(img2, width=600))
+# cv2.imshow("result", result)
 
 cv2.waitKey(0)
