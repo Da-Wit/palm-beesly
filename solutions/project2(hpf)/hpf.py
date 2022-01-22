@@ -205,7 +205,7 @@ class HPF:
 # 아래는 사용 예시입니다
 
 # 이미지 읽기
-image_path = "C:/Users/USER/workspace/palm/test_img/sample2.2.png"
+image_path = "C:/Users/think/workspace/palm-beesly/test_img/sample2.2.png"
 img = cv2.imread(image_path)
 
 if img is None:

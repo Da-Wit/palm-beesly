@@ -161,7 +161,7 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     return horizontal_img, vertical_img
 
 
-image_path = "C:/Users/USER/workspace/palm/test_img/edit5.png"
+image_path = "C:/Users/think/workspace/palm-beesly/test_img/edit5.png"
 img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
 if img is None:
