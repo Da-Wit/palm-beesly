@@ -4,6 +4,7 @@ import solutions.utils as utils
 from lines import Lines
 import numpy as np
 import timeit
+from solutions.zoom.main import zoom
 
 start = timeit.default_timer()
 
@@ -67,13 +68,6 @@ def get_roi(img, min_grayscale=0):
 def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line_distance, is_horizontal):
     h, w = img_param.shape[:2]
 
-    zoom = 8
-    skip = True
-
-    for_debugging = copy.deepcopy(img_param) * 0
-    for_debugging = cv2.cvtColor(for_debugging, cv2.COLOR_GRAY2RGB)
-    for_debugging = utils.resize(for_debugging, height=h * zoom)
-
     if is_horizontal:
         first_for_loop_max = w
         second_for_loop_max = h
@@ -94,33 +88,14 @@ def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line
                 y = i
             if img_param[y][x] > min_grayscale < max_grayscale and find is False:
                 find = True
-                lines.handle_point(
-                    [x, y], max_line_distance, for_debugging, zoom)
+                lines.handle_point([x, y], max_line_distance)
                 prev_j = j
 
             elif (min_grayscale >= img_param[y][x] or img_param[y][x] >= max_grayscale) and find is True:
                 find = False
                 if j - prev_j > min_j_gap:
                     lines.handle_point(
-                        [x, y], max_line_distance, for_debugging, zoom)
-
-            if skip is False:
-                for_showing = copy.deepcopy(for_debugging)
-
-                for_showing[y * zoom][x * zoom] = [0, 0, 255]
-
-                cv2.circle(for_showing, (x * zoom, y * zoom),
-                           max_line_distance * zoom, (0, 0, 255), 1)
-
-                cv2.imshow("img_on_progress", for_showing)
-
-                k = cv2.waitKey(0)
-
-                if k == 110:  # n key to skip
-                    skip = True
-                if k == 27:  # Esc key to stop
-                    cv2.destroyAllWindows()
-                    exit(0)
+                        [x, y], max_line_distance)
 
     return lines
 
@@ -169,6 +144,9 @@ if img is None:
     print("Image is empty!!")
     exit(1)
 
+
+img = zoom(img, 0.5)
+
 # Default value is 0
 # min_grayscale = 63
 min_grayscale = 70
@@ -187,7 +165,7 @@ number_of_lines_to_leave = 10
 img2, img3 = main(img, min_grayscale, max_grayscale,
                   min_line_length, max_line_distance, number_of_lines_to_leave)
 
-result = img2 + img3
+# result = img2 + img3
 
 stop = timeit.default_timer()
 
