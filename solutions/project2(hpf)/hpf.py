@@ -1,6 +1,7 @@
 import cv2
 import enum
 import numpy as np
+import os
 
 # 구현 할 때 사용한 스펙
 # cv2 버젼(cv2.__version__) -> 4.5.2
@@ -204,31 +205,47 @@ class HPF:
 
 # 아래는 사용 예시입니다
 
-# 이미지 읽기
-image_path = "C:/Users/think/workspace/palm-beesly/test_img/sample2.2.png"
-img = cv2.imread(image_path)
+for i in range(12):
+    # 이미지 읽기
+    directory_path = "C:/Users/think/workspace/palm-beesly/test_img"
+    image_name = f"sample{i}"
+    image_path = directory_path + '/' + image_name + ".1.png"
 
-if img is None:
-    print("Image is empty!!")
-    exit(1)
-# alpha(HPF의 2번째 인자)는 트랙바에서처럼 필터마다 최대값이 다른고 0 ~ max_sobel_alpha 혹은 0 ~ max_scharr_alpha이어야 함
-# gaussian(HPF의 3번째 인자)은 트랙바에서처럼 0~10만 가능함
+    # "C:/Users/think/workspace/palm-beesly/test_img/sample2.1.png"
+    img = cv2.imread(image_path)
 
-sb3x3 = HPF(HPF_type.SB3X3, alpha=500, gaussian=1).process(img)
-cv2.imshow('sb3x3', sb3x3)
+    if img is None:
+        print(f"Image{i} is empty!!")
+        continue
+        # exit(1)
+    # alpha(HPF의 2번째 인자)는 트랙바에서처럼 필터마다 최대값이 다른고 0 ~ max_sobel_alpha 혹은 0 ~ max_scharr_alpha이어야 함
+    # gaussian(HPF의 3번째 인자)은 트랙바에서처럼 0~10만 가능함
 
-sb5x5 = HPF(HPF_type.SB5X5, alpha=500, gaussian=2)
-cv2.imshow('sb5x5', sb5x5.process(img))
+    sb3x3 = HPF(HPF_type.SB3X3, alpha=500, gaussian=1).process(img)
+    # cv2.imshow('sb3x3', sb3x3)
+    cv2.imwrite(os.path.join(directory_path, image_name + ".2.png"), sb3x3)
 
-sb7x7 = HPF(HPF_type.SB7X7, alpha=500, gaussian=3)
-sb7x7_result = sb7x7.process(img)
-cv2.imshow('sb7x7', sb7x7_result)
 
-sc3x3 = HPF(HPF_type.SC3X3, alpha=500, gaussian=4).process(img)
-cv2.imshow('sc3x3', sc3x3)
+    sb5x5 = HPF(HPF_type.SB5X5, alpha=500, gaussian=2)
+    # cv2.imshow('sb5x5', sb5x5.process(img))
+    cv2.imwrite(os.path.join(directory_path , image_name+".3.png"), sb5x5.process(img))
 
-sc5x5 = HPF(HPF_type.SC5X5, alpha=500, gaussian=5).process(img)
-cv2.imshow('sc5x5', sc5x5)
 
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+    sb7x7 = HPF(HPF_type.SB7X7, alpha=500, gaussian=3)
+    sb7x7_result = sb7x7.process(img)
+    # cv2.imshow('sb7x7', sb7x7_result)
+    cv2.imwrite(os.path.join(directory_path , image_name+".4.png"), sb7x7_result)
+
+
+    sc3x3 = HPF(HPF_type.SC3X3, alpha=500, gaussian=4).process(img)
+    # cv2.imshow('sc3x3', sc3x3)
+    cv2.imwrite(os.path.join(directory_path , image_name+".5.png"), sc3x3)
+
+
+    sc5x5 = HPF(HPF_type.SC5X5, alpha=500, gaussian=5).process(img)
+    # cv2.imshow('sc5x5', sc5x5)
+    cv2.imwrite(os.path.join(directory_path , image_name+".6.png"), sc5x5)
+
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+print("done")
