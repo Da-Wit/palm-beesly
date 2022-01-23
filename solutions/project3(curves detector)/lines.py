@@ -3,9 +3,7 @@ import numpy as np
 import random
 import copy
 import cv2
-
-clear = "\n" * 100
-
+import os
 
 class Lines:
     def __init__(self):
@@ -15,9 +13,9 @@ class Lines:
     def add_line(self, line):
         self.line_list.append(line)
 
-    def calculate_point_list_in_calculation_area_at_all_lines(self, point, max_distance):
+    def renew_work_area(self, point, max_distance):
         for lineOne in self.line_list:
-            lineOne.calculate_point_list_in_calculation_area(point, max_distance)
+            lineOne.renew_work_area(point, max_distance)
 
     def get_index_list_of_close_lines(self, point, max_distance):
         index_list = []
@@ -41,8 +39,6 @@ class Lines:
         return find
 
     def handle_point(self, point, max_distance):
-        self.calculate_point_list_in_calculation_area_at_all_lines(point, max_distance)
-
         list_of_index_of_close_lines = self.get_index_list_of_close_lines(point, max_distance)
         number_of_close_lines = len(list_of_index_of_close_lines)
 
@@ -51,8 +47,8 @@ class Lines:
         # 즉, 새로운 선 발견했다고 추정해 새로운 선 추가
         if number_of_close_lines == 0:
             lineOne = LineOne(self.number_of_front_points_to_find_slope)
-            self.add_line(lineOne)
             lineOne.add_point(point)
+            self.add_line(lineOne)
 
         # 점 주변에 선이 1개일 때
         # 그 1개의 선에 점 추가
@@ -104,10 +100,26 @@ class Lines:
                 line_list.remove(lineOne)  # 길이가 3픽셀도 안되는 선은 세로선이거나 잡음이므로 지움.
         self.line_list = line_list
 
-    def visualize_lines(self, img_param, color=False):
+
+    def temp_fucntion(self, img_param, image_name):
+        directory_path = "C:/Users/think/workspace/palm-beesly/test_img"
         copied_img = copy.deepcopy(img_param)
         height, width = copied_img.shape[:2]
         for_showing = np.zeros((height, width, 1), dtype=np.uint8)
+        count = 0
+
+        for lineOne in self.line_list:
+            for point in lineOne.all_point_list:
+                x,y = point
+                for_showing[y][x] = 255
+            cv2.imwrite(os.path.join(directory_path, f"{image_name}{count}.png"), for_showing)
+            for_showing = for_showing * 0
+            count += 1
+
+
+    def visualize_lines(self, img_param, color=False):
+        copied_img = copy.deepcopy(img_param)
+        height, width = copied_img.shape[:2]
         if color:
             copied_img = cv2.cvtColor(copied_img, cv2.COLOR_GRAY2BGR)
             temp = np.zeros((height, width, 3), dtype=np.uint8)
@@ -116,7 +128,6 @@ class Lines:
 
         for lineOne in self.line_list:
             temp = temp * 0
-            for_showing = for_showing * 0
             for point in lineOne.all_point_list:
 
                 x = point[0]
@@ -126,7 +137,6 @@ class Lines:
                     temp[y][x] = lineOne.color
                 else:
                     temp[y][x] = 255
-                for_showing[y][x] = 255
 
             copied_img = copied_img + temp
 

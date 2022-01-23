@@ -7,7 +7,7 @@ import random
 class LineOne:
     def __init__(self, number_of_front_points_to_find_slope):
         self.all_point_list = []
-        self.point_list_in_calculation_area = []
+        self.point_list_in_work_area = []
         self.own_slope = -1
         self.number_of_front_points_to_find_slope = number_of_front_points_to_find_slope
         self.changed_after_calculating_slope = True
@@ -23,11 +23,11 @@ class LineOne:
     # point는 [x, y]꼴임
     def add_point(self, point):
         self.all_point_list.append(point)
-        self.point_list_in_calculation_area.append(point)
+        self.point_list_in_work_area.append(point)
 
     def is_continuable(self, external_point, max_distance=3):
-        for idx in range(len(self.point_list_in_calculation_area)):
-            current_point = self.point_list_in_calculation_area[idx]
+        for idx in range(len(self.point_list_in_work_area)):
+            current_point = self.point_list_in_work_area[idx]
             if utils.distance_between(current_point, external_point) < max_distance:
                 return True
 
@@ -63,16 +63,14 @@ class LineOne:
 
         return avg_gradient
 
-    def calculate_point_list_in_calculation_area(self, external_point, max_distance):
-        a = 1
-        # copied = copy.deepcopy(self.point_list_in_calculation_area)
-        # number_of_deletion = 0
-        # for idx in range(len(copied)):
-        #     real_idx = idx - number_of_deletion
-        #     current_point = self.point_list_in_calculation_area[real_idx]
-        #     x_gap = abs(current_point[0] - external_point[0])
-        #     y_gap = abs(current_point[1] - external_point[1])
-        #     if x_gap >= max_distance and y_gap >= max_distance:
-        #         del self.point_list_in_calculation_area[real_idx]
-        #         number_of_deletion = number_of_deletion + 1
-        #         continue
+    def renew_work_area(self, external_point, max_distance):
+        list_len = len(self.point_list_in_work_area)
+        number_of_deleted_point = 0
+        for idx in range(list_len):
+            real_idx = idx - number_of_deleted_point
+            current_point = self.point_list_in_work_area[real_idx]
+            x_gap = abs(current_point[0] - external_point[0])
+            y_gap = abs(current_point[1] - external_point[1])
+            if x_gap >= max_distance and y_gap >= max_distance:
+                del self.point_list_in_work_area[real_idx]
+                number_of_deleted_point += 1
