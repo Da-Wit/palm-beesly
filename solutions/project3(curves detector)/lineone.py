@@ -74,3 +74,48 @@ class LineOne:
             if x_gap >= max_distance and y_gap >= max_distance:
                 del self.point_list_in_work_area[real_idx]
                 number_of_deleted_point += 1
+
+
+    def get_min_max_of_x_or_y(self,is_horizontal):
+        if is_horizontal:
+            x_or_y = 0 # index of x
+        else:
+            x_or_y = 1 # index of y
+
+        min_val = self.all_point_list[0][x_or_y]
+        max_val = self.all_point_list[0][x_or_y]
+
+        for i in range(1, len(self.all_point_list)):
+            if min_val > self.all_point_list[i][x_or_y]:
+                min_val = self.all_point_list[i][x_or_y]
+            elif max_val < self.all_point_list[i][x_or_y]:
+                max_val = self.all_point_list[i][x_or_y]
+
+        return min_val, max_val
+
+    def some_function(self, filtered, max_distance, index):
+        # idx = abs(index - 1)
+        print(filtered)
+
+
+
+
+    def flatten(self, max_distance, min_val, max_val, is_horizontal):
+        result = []
+        for i in range(min_val, max_val + 1):
+            if is_horizontal:
+                index = 0 # index of x
+            else:
+                index = 1 # index of y
+
+            filtered = list(filter(lambda point: point[index] == i, self.all_point_list))
+
+            if len(filtered) > 1:
+                filtered = self.some_function(filtered, max_distance, index)
+
+            # result += filtered
+
+        return result
+
+
+

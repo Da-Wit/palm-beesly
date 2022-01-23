@@ -142,26 +142,33 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     print("Finding lines: ", stop - start)
     timer_sum += stop - start
 
-    # horizontal_lines.filter_by_line_length(min_line_length)
-    # vertical_lines.filter_by_line_length(min_line_length)
+    horizontal_lines.filter_by_line_length(min_line_length)
+    vertical_lines.filter_by_line_length(min_line_length)
 
-    # Leaving long lines part
-    start = timeit.default_timer()
-    horizontal_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
-    vertical_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
-    stop = timeit.default_timer()
+    temp_max_distance = 1
+    horizontal_lines.flatten(temp_max_distance,is_horizontal=True)
+    vertical_lines.flatten(temp_max_distance, is_horizontal=False)
 
-    print("Leaving long lines: ", stop - start)
-    timer_sum += stop - start
 
-    # Temp part
-    start = timeit.default_timer()
-    horizontal_lines.temp_fucntion(horizontal_img, "hori")
-    vertical_lines.temp_fucntion(vertical_img, "vert")
-    stop = timeit.default_timer()
 
-    print("Temp: ", stop - start)
-    timer_sum += stop - start
+    # # Leaving long lines part
+    # start = timeit.default_timer()
+    # horizontal_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
+    # vertical_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
+    # stop = timeit.default_timer()
+    #
+    # print("Leaving long lines: ", stop - start)
+    # timer_sum += stop - start
+    #
+    # # Temp part
+    # start = timeit.default_timer()
+    # horizontal_lines.temp_fucntion(horizontal_img, "hori")
+    # vertical_lines.temp_fucntion(vertical_img, "vert")
+    # stop = timeit.default_timer()
+    #
+    # print("Temp: ", stop - start)
+    # timer_sum += stop - start
+
 
     # horizontal_img = horizontal_lines.visualize_lines(horizontal_img, color=True)
     # vertical_img = vertical_lines.visualize_lines(vertical_img, color=True)
@@ -169,8 +176,8 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     return horizontal_img, vertical_img
 
 
-image_path = "C:/Users/think/Desktop/temp/threshold.png"
-# image_path = "C:/Users/think/workspace/palm-beesly/test_img/sample5.4.png"
+# image_path = "C:/Users/think/Desktop/temp/threshold.png"
+image_path = "C:/Users/think/workspace/palm-beesly/test_img/sample5.4.png"
 img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
 if img is None:
@@ -211,10 +218,10 @@ img2, img3 = main(img, min_grayscale, max_grayscale,
 # print('Time: ', stop - start)
 
 # cv2.imshow("original", utils.resize(img, width=600))
-cv2.imshow("vertical", img3)
-cv2.imshow("horizontal", img2)
+# cv2.imshow("vertical", img3)
+# cv2.imshow("horizontal", img2)
 # cv2.imshow("vertical", utils.resize(img3, width=600))
 # cv2.imshow("horizontal", utils.resize(img2, width=600))
 # cv2.imshow("result", result)
 
-cv2.waitKey(0)
+# cv2.waitKey(0)

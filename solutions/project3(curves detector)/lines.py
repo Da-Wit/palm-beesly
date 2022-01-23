@@ -164,3 +164,8 @@ class Lines:
             print("number_of_lines_to_leave can't be larger than length of line_list.")
             exit(1)
         self.line_list = self.line_list[:number_of_lines_to_leave]
+
+    def flatten(self, max_distance, is_horizontal):
+        for i in range(len(self.line_list)):
+            min_val, max_val = self.line_list[i].get_min_max_of_x_or_y(is_horizontal)
+            self.line_list[i].flatten(max_distance, min_val, max_val, is_horizontal)
