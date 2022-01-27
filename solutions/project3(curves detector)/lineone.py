@@ -1,5 +1,4 @@
 import copy
-
 import solutions.utils as utils
 import random
 
@@ -93,15 +92,25 @@ class LineOne:
 
         return min_val, max_val
 
+    # TODO U자형 선같은 경우를 고려해서 x좌표 or y좌표가 같은
+    # 모든 좌표의 y좌표 or x좌표를 더하지 말고 좌표의 거리가
+    # n 이하일 경우에만 더하도록 바꾸기
+    # TODO 함수 이름 바꾸기
     def some_function(self, filtered, max_distance, index):
-        # idx = abs(index - 1)
-        print(filtered)
+        idx = abs(index - 1)
+        sum_val = 0
+        for i in filtered:
+            sum_val += i[idx]
+        avg = round(sum_val / len(filtered))
+        result = [0,0]
+        result[index] = filtered[0][index]
+        result[idx] = avg
 
-
-
+        return [result]
 
     def flatten(self, max_distance, min_val, max_val, is_horizontal):
         result = []
+
         for i in range(min_val, max_val + 1):
             if is_horizontal:
                 index = 0 # index of x
@@ -109,13 +118,14 @@ class LineOne:
                 index = 1 # index of y
 
             filtered = list(filter(lambda point: point[index] == i, self.all_point_list))
+            if len(filtered) == 0:
+                continue
 
             if len(filtered) > 1:
                 filtered = self.some_function(filtered, max_distance, index)
+            result = result + filtered
+        self.all_point_list = result
 
-            # result += filtered
-
-        return result
 
 
 
