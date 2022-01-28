@@ -4,8 +4,6 @@ from lines import Lines
 import numpy as np
 import timeit
 
-# import solutions.zoom.main as zoom
-
 timer_sum = 0
 start = timeit.default_timer()
 
@@ -129,6 +127,7 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     cropped = get_roi(img_param)
     height, width = cropped.shape[:2]
     stop = timeit.default_timer()
+    cv2.imshow("original", cropped)
 
     print("Getting roi: ", stop - start)
     timer_sum += stop - start
@@ -144,38 +143,37 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     print("Finding lines: ", stop - start)
     timer_sum += stop - start
 
+    # Filtering part
+    start = timeit.default_timer()
     horizontal_lines.filter_by_line_length(min_line_length)
     vertical_lines.filter_by_line_length(min_line_length)
+    stop = timeit.default_timer()
+    print("Filtering: ", stop - start)
+    timer_sum += stop - start
+
+    # Leaving long lines part
+    start = timeit.default_timer()
+    horizontal_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
+    vertical_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
+    stop = timeit.default_timer()
+    print("Leaving long lines: ", stop - start)
+    timer_sum += stop - start
 
     temp_max_distance = 1
     horizontal_lines.flatten(temp_max_distance, is_horizontal=True)
     vertical_lines.flatten(temp_max_distance, is_horizontal=False)
 
-    # # Leaving long lines part
-    # start = timeit.default_timer()
-    # horizontal_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
-    # vertical_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
-    # stop = timeit.default_timer()
-    #
-    # print("Leaving long lines: ", stop - start)
-    # timer_sum += stop - start
-    #
-    # # Temp part
-    # start = timeit.default_timer()
-    # horizontal_lines.temp_fucntion(horizontal_img, "hori")
-    # vertical_lines.temp_fucntion(vertical_img, "vert")
-    # stop = timeit.default_timer()
-    #
-    # print("Temp: ", stop - start)
-    # timer_sum += stop - start
+    # Visualizing part
+    start = timeit.default_timer()
+    horizontal_img = horizontal_lines.visualize_lines(horizontal_img, color=True)
+    vertical_img = vertical_lines.visualize_lines(vertical_img, color=True)
+    stop = timeit.default_timer()
+    print("Visualizing: ", stop - start)
 
-    # horizontal_img = horizontal_lines.visualize_lines(horizontal_img, color=True)
-    # vertical_img = vertical_lines.visualize_lines(vertical_img, color=True)
     print("Timer sum", timer_sum)
     return horizontal_img, vertical_img
 
 
-# image_path = "C:/Users/think/Desktop/temp/threshold.png"
 image_path = "C:/Users/think/workspace/palm-beesly/test_img/sample5.4.png"
 img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
@@ -183,42 +181,22 @@ if img is None:
     print("Image is empty!!")
     exit(1)
 
-# img = zoom.zoom(img, 0.5)
-
-# Default value is 0
-# min_grayscale = 63
-min_grayscale = 70
-
+min_grayscale = 70  # Default value is 63
 max_grayscale = 200
 
 # The minimum number of dots in one line
-# Default value is 4
-min_line_length = 10
-
-# Default value is 3
-max_line_distance = 5
-
-number_of_lines_to_leave = 10
+min_line_length = 10  # Default value is 4
+max_line_distance = 5  # Default value is 3
+number_of_lines_to_leave = 10  # Default value is 10
 
 stop = timeit.default_timer()
-
 # Initializing part
-timer_sum += stop - start
+timer_sum += stop - start  # start lies on top of file.
 print("Initializing: ", stop - start)
 
 img2, img3 = main(img, min_grayscale, max_grayscale,
                   min_line_length, max_line_distance, number_of_lines_to_leave, timer_sum)
 
-# result = img2 + img3
-
-
-# print('Time: ', stop - start)
-
-# cv2.imshow("original", utils.resize(img, width=600))
-# cv2.imshow("vertical", img3)
-# cv2.imshow("horizontal", img2)
-# cv2.imshow("vertical", utils.resize(img3, width=600))
-# cv2.imshow("horizontal", utils.resize(img2, width=600))
-# cv2.imshow("result", result)
-
-# cv2.waitKey(0)
+cv2.imshow("vertical", img3)
+cv2.imshow("horizontal", img2)
+cv2.waitKey(0)

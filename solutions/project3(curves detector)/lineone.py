@@ -76,26 +76,19 @@ class LineOne:
 
     def get_min_max_of_x_or_y(self, is_horizontal):
         if is_horizontal:
-            x_or_y = 0  # index of x
+            index = 0  # index of x
         else:
-            x_or_y = 1  # index of y
+            index = 1  # index of y
 
-        min_val = self.all_point_list[0][x_or_y]
-        max_val = self.all_point_list[0][x_or_y]
-
-        for i in range(1, len(self.all_point_list)):
-            if min_val > self.all_point_list[i][x_or_y]:
-                min_val = self.all_point_list[i][x_or_y]
-            elif max_val < self.all_point_list[i][x_or_y]:
-                max_val = self.all_point_list[i][x_or_y]
+        max_val = max(self.all_point_list, key=lambda point: point[index])[index]
+        min_val = min(self.all_point_list, key=lambda point: point[index])[index]
 
         return min_val, max_val
 
     # TODO U자형 선같은 경우를 고려해서 x좌표 or y좌표가 같은
     # 모든 좌표의 y좌표 or x좌표를 더하지 말고 좌표의 거리가
     # n 이하일 경우에만 더하도록 바꾸기
-    # TODO 함수 이름 바꾸기
-    def some_function(self, filtered, max_distance, index):
+    def flatten_on_one_x_or_y(self, filtered, max_distance, index):
         idx = abs(index - 1)
         sum_val = 0
         for i in filtered:
@@ -108,7 +101,7 @@ class LineOne:
         return [result]
 
     def flatten(self, max_distance, min_val, max_val, is_horizontal):
-        result = []
+        flattened = []
 
         for i in range(min_val, max_val + 1):
             if is_horizontal:
@@ -116,11 +109,12 @@ class LineOne:
             else:
                 index = 1  # index of y
 
-            filtered = list(filter(lambda point: point[index] == i, self.all_point_list))
-            if len(filtered) == 0:
-                continue
+            flattened_on_one_x_or_y = list(filter(lambda point: point[index] == i, self.all_point_list))
 
-            if len(filtered) > 1:
-                filtered = self.some_function(filtered, max_distance, index)
-            result = result + filtered
-        self.all_point_list = result
+            if len(flattened_on_one_x_or_y) == 0:
+                continue
+            elif len(flattened_on_one_x_or_y) > 1:
+                flattened_on_one_x_or_y = self.flatten_on_one_x_or_y(flattened_on_one_x_or_y, max_distance, index)
+            flattened = flattened + flattened_on_one_x_or_y
+
+        self.all_point_list = flattened

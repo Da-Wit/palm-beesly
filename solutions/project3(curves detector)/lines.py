@@ -139,12 +139,6 @@ class Lines:
 
             copied_img = copied_img + temp
 
-            # cv2.imshow("img_on_progress", utils.resize(for_showing, width=600))
-            # k = cv2.waitKey(0)
-            # if k == 27:  # Esc key to stop
-            #     cv2.destroyAllWindows()
-            #     exit(0)
-
         return copied_img + temp
 
     def sort(self):
