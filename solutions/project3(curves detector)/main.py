@@ -2,10 +2,6 @@ import cv2
 import copy
 from lines import Lines
 import numpy as np
-import timeit
-
-timer_sum = 0
-start = timeit.default_timer()
 
 
 # 인풋으로 받은 캐니처리만 된 이미지에서 좌, 우, 위, 아래로 grayscle값이
@@ -120,57 +116,35 @@ def find_vertical_lines(img_param, min_grayscale, max_grayscale, max_line_distan
 
 # 이미지와 값 조정 변수를 넣어주면 최종적으로 시각화된 이미지를 가로, 세로로 나눠 리턴함
 # 외부에서 최종적으로 사용할 함수
-def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_distance=3, number_of_lines_to_leave=10,
-         timer_sum=0):
+def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_distance=3, number_of_lines_to_leave=10):
     # Getting roi part
-    start = timeit.default_timer()
     cropped = get_roi(img_param)
     height, width = cropped.shape[:2]
-    stop = timeit.default_timer()
     cv2.imshow("original", cropped)
 
-    print("Getting roi: ", stop - start)
-    timer_sum += stop - start
-
     # Finding lines part
-    start = timeit.default_timer()
     horizontal_img = np.zeros((height, width, 1), dtype=np.uint8)
     vertical_img = np.zeros((height, width, 1), dtype=np.uint8)
     horizontal_lines = find_horizontal_lines(cropped, min_grayscale, max_grayscale, max_line_distance)
     vertical_lines = find_vertical_lines(cropped, min_grayscale, max_grayscale, max_line_distance)
-    stop = timeit.default_timer()
-
-    print("Finding lines: ", stop - start)
-    timer_sum += stop - start
 
     # Filtering part
-    start = timeit.default_timer()
     horizontal_lines.filter_by_line_length(min_line_length)
     vertical_lines.filter_by_line_length(min_line_length)
-    stop = timeit.default_timer()
-    print("Filtering: ", stop - start)
-    timer_sum += stop - start
 
     # Leaving long lines part
-    start = timeit.default_timer()
     horizontal_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
     vertical_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
-    stop = timeit.default_timer()
-    print("Leaving long lines: ", stop - start)
-    timer_sum += stop - start
 
+    # Flattening part
     temp_max_distance = 1
     horizontal_lines.flatten(temp_max_distance, is_horizontal=True)
     vertical_lines.flatten(temp_max_distance, is_horizontal=False)
 
     # Visualizing part
-    start = timeit.default_timer()
     horizontal_img = horizontal_lines.visualize_lines(horizontal_img, color=True)
     vertical_img = vertical_lines.visualize_lines(vertical_img, color=True)
-    stop = timeit.default_timer()
-    print("Visualizing: ", stop - start)
 
-    print("Timer sum", timer_sum)
     return horizontal_img, vertical_img
 
 
@@ -189,13 +163,7 @@ min_line_length = 10  # Default value is 4
 max_line_distance = 5  # Default value is 3
 number_of_lines_to_leave = 10  # Default value is 10
 
-stop = timeit.default_timer()
-# Initializing part
-timer_sum += stop - start  # start lies on top of file.
-print("Initializing: ", stop - start)
-
-img2, img3 = main(img, min_grayscale, max_grayscale,
-                  min_line_length, max_line_distance, number_of_lines_to_leave, timer_sum)
+img2, img3 = main(img, min_grayscale, max_grayscale, min_line_length, max_line_distance, number_of_lines_to_leave)
 
 cv2.imshow("vertical", img3)
 cv2.imshow("horizontal", img2)
