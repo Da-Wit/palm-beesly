@@ -124,7 +124,8 @@ def find_vertical_lines(img_param, min_grayscale, max_grayscale, max_line_distan
 
 # 이미지와 값 조정 변수를 넣어주면 최종적으로 시각화된 이미지를 가로, 세로로 나눠 리턴함
 # 외부에서 최종적으로 사용할 함수
-def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_distance=3, number_of_lines_to_leave=10, timer_sum = 0):
+def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_distance=3, number_of_lines_to_leave=10,
+         timer_sum=0):
     # Getting roi part
     start = timeit.default_timer()
     cropped = get_roi(img_param)
@@ -219,11 +220,9 @@ cv2.imshow("horizontal", img2)
 cv2.imshow("vertical", img3)
 cv2.waitKey(0)
 
-
 rst2 = cv2.ximgproc.thinning(img2)
 rst3 = cv2.ximgproc.thinning(img3)
 
 cv2.imshow("horizontal", rst2)
 cv2.imshow("vertical", rst3)
 cv2.waitKey(0)
-

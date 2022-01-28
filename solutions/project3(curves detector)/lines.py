@@ -5,6 +5,7 @@ import copy
 import cv2
 import os
 
+
 class Lines:
     def __init__(self):
         self.line_list = []
@@ -100,7 +101,6 @@ class Lines:
                 line_list.remove(lineOne)  # 길이가 3픽셀도 안되는 선은 세로선이거나 잡음이므로 지움.
         self.line_list = line_list
 
-
     def temp_fucntion(self, img_param, image_name):
         directory_path = "C:/Users/think/workspace/palm-beesly/test_img"
         copied_img = copy.deepcopy(img_param)
@@ -110,12 +110,11 @@ class Lines:
 
         for lineOne in self.line_list:
             for point in lineOne.all_point_list:
-                x,y = point
+                x, y = point
                 for_showing[y][x] = 255
             cv2.imwrite(os.path.join(directory_path, f"{image_name}{count}.png"), for_showing)
             for_showing = for_showing * 0
             count += 1
-
 
     def visualize_lines(self, img_param, color=False):
         copied_img = copy.deepcopy(img_param)
@@ -174,15 +173,15 @@ class Lines:
         copied = copy.deepcopy(img_param)
         for i in range(len(self.line_list)):
             lineOne = self.line_list[i].all_point_list
-            pts = np.array(lineOne,np.int32)
+            pts = np.array(lineOne, np.int32)
             isClosed = False
             color = tuple(self.line_list[i].color)
             cv2.polylines(copied, [pts], isClosed, color)
         return copied
-            # (img: Any,
-            # pts: Any,
-            # isClosed: Any,
-            # color: Any,
-            # thickness: Any = None,
-            # lineType: Any = None,
-            # shift: Any = None)
+        # (img: Any,
+        # pts: Any,
+        # isClosed: Any,
+        # color: Any,
+        # thickness: Any = None,
+        # lineType: Any = None,
+        # shift: Any = None)

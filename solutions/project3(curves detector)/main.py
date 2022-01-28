@@ -3,6 +3,7 @@ import copy
 from lines import Lines
 import numpy as np
 import timeit
+
 # import solutions.zoom.main as zoom
 
 timer_sum = 0
@@ -121,7 +122,8 @@ def find_vertical_lines(img_param, min_grayscale, max_grayscale, max_line_distan
 
 # 이미지와 값 조정 변수를 넣어주면 최종적으로 시각화된 이미지를 가로, 세로로 나눠 리턴함
 # 외부에서 최종적으로 사용할 함수
-def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_distance=3, number_of_lines_to_leave=10, timer_sum = 0):
+def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_distance=3, number_of_lines_to_leave=10,
+         timer_sum=0):
     # Getting roi part
     start = timeit.default_timer()
     cropped = get_roi(img_param)
@@ -146,10 +148,8 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     vertical_lines.filter_by_line_length(min_line_length)
 
     temp_max_distance = 1
-    horizontal_lines.flatten(temp_max_distance,is_horizontal=True)
+    horizontal_lines.flatten(temp_max_distance, is_horizontal=True)
     vertical_lines.flatten(temp_max_distance, is_horizontal=False)
-
-
 
     # # Leaving long lines part
     # start = timeit.default_timer()
@@ -168,7 +168,6 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     #
     # print("Temp: ", stop - start)
     # timer_sum += stop - start
-
 
     # horizontal_img = horizontal_lines.visualize_lines(horizontal_img, color=True)
     # vertical_img = vertical_lines.visualize_lines(vertical_img, color=True)
@@ -207,12 +206,10 @@ stop = timeit.default_timer()
 timer_sum += stop - start
 print("Initializing: ", stop - start)
 
-
 img2, img3 = main(img, min_grayscale, max_grayscale,
                   min_line_length, max_line_distance, number_of_lines_to_leave, timer_sum)
 
 # result = img2 + img3
-
 
 
 # print('Time: ', stop - start)

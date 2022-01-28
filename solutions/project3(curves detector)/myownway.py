@@ -66,6 +66,7 @@ def get_roi(img, min_grayscale=0):
 
     return copied[topmost:downmost, leftmost:rightmost]
 
+
 # 한 방향으로의 hline들의 리스트, nline을 리턴함
 def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line_distance, is_horizontal):
     h, w = img_param.shape[:2]
@@ -123,7 +124,8 @@ def find_vertical_lines(img_param, min_grayscale, max_grayscale, max_line_distan
 
 # 이미지와 값 조정 변수를 넣어주면 최종적으로 시각화된 이미지를 가로, 세로로 나눠 리턴함
 # 외부에서 최종적으로 사용할 함수
-def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_distance=3, number_of_lines_to_leave=10, timer_sum = 0):
+def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_distance=3, number_of_lines_to_leave=10,
+         timer_sum=0):
     # Getting roi part
     start = timeit.default_timer()
     cropped = get_roi(img_param)
@@ -157,7 +159,6 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     print("Leaving long lines: ", stop - start)
     timer_sum += stop - start
 
-
     temp_max_distance = 1
     horizontal_lines.flatten(temp_max_distance, is_horizontal=True)
     vertical_lines.flatten(temp_max_distance, is_horizontal=False)
@@ -171,6 +172,7 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
 
     print("Timer sum", timer_sum)
     return horizontal_img, vertical_img
+
 
 # image_path = "C:/Users/think/Desktop/temp/threshold.png"
 image_path = "C:/Users/think/workspace/palm-beesly/test_img/sample5.4.png"
