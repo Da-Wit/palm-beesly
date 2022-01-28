@@ -154,8 +154,9 @@ class Lines:
         self.sort()
 
         if number_of_lines_to_leave > len(self.line_list):
-            print("number_of_lines_to_leave can't be larger than length of line_list.")
-            exit(1)
+            print(
+                "Variable \"number_of_lines_to_leave\" is larger than the number of existing lines so execution of this function \"leave_long_lines\" has canceled.")
+            return None
         self.line_list = self.line_list[:number_of_lines_to_leave]
 
     def flatten(self, max_distance, is_horizontal):

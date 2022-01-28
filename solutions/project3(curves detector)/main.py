@@ -2,6 +2,7 @@ import cv2
 import copy
 from lines import Lines
 import numpy as np
+import trackbar
 
 
 # 인풋으로 받은 캐니처리만 된 이미지에서 좌, 우, 위, 아래로 grayscle값이
@@ -116,17 +117,16 @@ def find_vertical_lines(img_param, min_grayscale, max_grayscale, max_line_distan
 
 # 이미지와 값 조정 변수를 넣어주면 최종적으로 시각화된 이미지를 가로, 세로로 나눠 리턴함
 # 외부에서 최종적으로 사용할 함수
-def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_distance=3, number_of_lines_to_leave=10):
-    # Getting roi part
-    cropped = get_roi(img_param)
-    height, width = cropped.shape[:2]
-    cv2.imshow("original", cropped)
+def get_both(img_param, min_grayscale, max_grayscale, min_line_length, max_line_distance=3,
+             number_of_lines_to_leave=10):
+    copied = copy.deepcopy(img_param)
+    height, width = copied.shape[:2]
 
     # Finding lines part
     horizontal_img = np.zeros((height, width, 1), dtype=np.uint8)
+    horizontal_lines = find_horizontal_lines(copied, min_grayscale, max_grayscale, max_line_distance)
     vertical_img = np.zeros((height, width, 1), dtype=np.uint8)
-    horizontal_lines = find_horizontal_lines(cropped, min_grayscale, max_grayscale, max_line_distance)
-    vertical_lines = find_vertical_lines(cropped, min_grayscale, max_grayscale, max_line_distance)
+    vertical_lines = find_vertical_lines(copied, min_grayscale, max_grayscale, max_line_distance)
 
     # Filtering part
     horizontal_lines.filter_by_line_length(min_line_length)
@@ -136,23 +136,66 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     horizontal_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
     vertical_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
 
-    # Visualizing part1
-    hori_before_flattening = horizontal_lines.visualize_lines(horizontal_img, color=True)
-    vert_before_flattening = vertical_lines.visualize_lines(vertical_img, color=True)
+    # Flattening part
+    temp_max_distance = 1
+    horizontal_lines.flatten(temp_max_distance, is_horizontal=True)
+    vertical_lines.flatten(temp_max_distance, is_horizontal=True)
 
-    cv2.imshow("hori_before_flattening", hori_before_flattening)
-    cv2.imshow("vert_before_flattening", vert_before_flattening)
+    # Visualizing part
+    horizontal_img = horizontal_lines.visualize_lines(horizontal_img, color=True)
+    vertical_img = horizontal_lines.visualize_lines(vertical_img, color=True)
+
+    return horizontal_img, vertical_img
+
+
+def get_horizontal(img_param, min_grayscale, max_grayscale, min_line_length, max_line_distance=3,
+                   number_of_lines_to_leave=10):
+    copied = copy.deepcopy(img_param)
+    height, width = copied.shape[:2]
+
+    # Finding lines part
+    horizontal_img = np.zeros((height, width, 1), dtype=np.uint8)
+    horizontal_lines = find_horizontal_lines(copied, min_grayscale, max_grayscale, max_line_distance)
+
+    # Filtering part
+    horizontal_lines.filter_by_line_length(min_line_length)
+
+    # Leaving long lines part
+    horizontal_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
 
     # Flattening part
     temp_max_distance = 1
     horizontal_lines.flatten(temp_max_distance, is_horizontal=True)
+
+    # Visualizing part
+    horizontal_img = horizontal_lines.visualize_lines(horizontal_img, color=True)
+
+    return horizontal_img
+
+
+def get_vertical(img_param, min_grayscale, max_grayscale, min_line_length, max_line_distance=3,
+                 number_of_lines_to_leave=10):
+    copied = copy.deepcopy(img_param)
+    height, width = copied.shape[:2]
+
+    # Finding lines part
+    vertical_img = np.zeros((height, width, 1), dtype=np.uint8)
+    vertical_lines = find_vertical_lines(copied, min_grayscale, max_grayscale, max_line_distance)
+
+    # Filtering part
+    vertical_lines.filter_by_line_length(min_line_length)
+
+    # Leaving long lines part
+    vertical_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
+
+    # Flattening part
+    temp_max_distance = 1
     vertical_lines.flatten(temp_max_distance, is_horizontal=False)
 
-    # Visualizing part2
-    horizontal_img = horizontal_lines.visualize_lines(horizontal_img, color=True)
+    # Visualizing part
     vertical_img = vertical_lines.visualize_lines(vertical_img, color=True)
 
-    return horizontal_img, vertical_img
+    return vertical_img
 
 
 image_path = "C:/Users/think/workspace/palm-beesly/test_img/sample5.4.png"
@@ -162,6 +205,8 @@ if img is None:
     print("Image is empty!!")
     exit(1)
 
+img = get_roi(img)
+
 min_grayscale = 70  # Default value is 63
 max_grayscale = 200
 
@@ -170,9 +215,71 @@ min_line_length = 10  # Default value is 4
 max_line_distance = 5  # Default value is 3
 number_of_lines_to_leave = 10  # Default value is 10
 
-img2, img3 = main(img, min_grayscale, max_grayscale, min_line_length, max_line_distance, number_of_lines_to_leave)
+copied = copy.deepcopy(img)
+height, width = copied.shape[:2]
 
-cv2.imshow("vertical", img3)
-cv2.imshow("horizontal", img2)
+# Finding lines part
+horizontal_img = np.zeros((height, width, 1), dtype=np.uint8)
+vertical_img = np.zeros((height, width, 1), dtype=np.uint8)
+horizontal_lines = find_horizontal_lines(copied, min_grayscale, max_grayscale, max_line_distance)
+vertical_lines = find_vertical_lines(copied, min_grayscale, max_grayscale, max_line_distance)
+
+# Filtering part
+horizontal_lines.filter_by_line_length(min_line_length)
+vertical_lines.filter_by_line_length(min_line_length)
+
+# Leaving long lines part
+horizontal_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
+vertical_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
+
+# Visualizing part1
+hori_before_flattening = horizontal_lines.visualize_lines(horizontal_img, color=True)
+vert_before_flattening = vertical_lines.visualize_lines(vertical_img, color=True)
+
+cv2.imshow("hori_before_flattening", hori_before_flattening)
+cv2.imshow("vert_before_flattening", vert_before_flattening)
+
+# Flattening part
+temp_max_distance = 1
+horizontal_lines.flatten(temp_max_distance, is_horizontal=True)
+vertical_lines.flatten(temp_max_distance, is_horizontal=False)
+
+# Visualizing part2
+horizontal_img = horizontal_lines.visualize_lines(horizontal_img, color=True)
+vertical_img = vertical_lines.visualize_lines(vertical_img, color=True)
+
+simplified_get_horizontal = lambda min_grayscale, \
+                                   max_grayscale, \
+                                   max_line_distance: get_horizontal(img, min_grayscale,
+                                                                     max_grayscale,
+                                                                     min_line_length,
+                                                                     max_line_distance,
+                                                                     number_of_lines_to_leave)
+
+simplified_get_vertical = lambda min_grayscale, \
+                                 max_grayscale, \
+                                 max_line_distance: get_vertical(img, min_grayscale,
+                                                                 max_grayscale,
+                                                                 min_line_length,
+                                                                 max_line_distance,
+                                                                 number_of_lines_to_leave)
+
+cv2.imshow("original", img)
+cv2.imshow("horizontal", horizontal_img)
+cv2.imshow("vertical", vertical_img)
+
+on_min_gray_changed_hori = lambda track_val: trackbar.on_min_gray_changed(track_val,
+                                                                          'horizontal',
+                                                                          simplified_get_horizontal)
+on_max_gray_changed_hori = lambda track_val: trackbar.on_max_gray_changed(track_val,
+                                                                          'horizontal',
+                                                                          simplified_get_horizontal)
+on_line_distance_changed_hori = lambda track_val: trackbar.on_line_distance_changed(track_val,
+                                                                                    'horizontal',
+                                                                                    simplified_get_horizontal)
+
+cv2.createTrackbar('min_gray', 'horizontal', min_grayscale, 255, on_min_gray_changed_hori)
+cv2.createTrackbar('max_gray', 'horizontal', max_grayscale, 255, on_min_gray_changed_hori)
+cv2.createTrackbar('line_distance', 'horizontal', max_line_distance, 30, on_min_gray_changed_hori)
 print("Done")
 cv2.waitKey(0)
