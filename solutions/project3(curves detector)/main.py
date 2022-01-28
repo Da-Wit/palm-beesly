@@ -136,12 +136,19 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     horizontal_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
     vertical_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
 
+    # Visualizing part1
+    hori_before_flattening = horizontal_lines.visualize_lines(horizontal_img, color=True)
+    vert_before_flattening = vertical_lines.visualize_lines(vertical_img, color=True)
+
+    cv2.imshow("hori_before_flattening", hori_before_flattening)
+    cv2.imshow("vert_before_flattening", vert_before_flattening)
+
     # Flattening part
     temp_max_distance = 1
     horizontal_lines.flatten(temp_max_distance, is_horizontal=True)
     vertical_lines.flatten(temp_max_distance, is_horizontal=False)
 
-    # Visualizing part
+    # Visualizing part2
     horizontal_img = horizontal_lines.visualize_lines(horizontal_img, color=True)
     vertical_img = vertical_lines.visualize_lines(vertical_img, color=True)
 
@@ -167,4 +174,5 @@ img2, img3 = main(img, min_grayscale, max_grayscale, min_line_length, max_line_d
 
 cv2.imshow("vertical", img3)
 cv2.imshow("horizontal", img2)
+print("Done")
 cv2.waitKey(0)
