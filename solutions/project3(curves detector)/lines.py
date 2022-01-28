@@ -168,20 +168,3 @@ class Lines:
         for i in range(len(self.line_list)):
             min_val, max_val = self.line_list[i].get_min_max_of_x_or_y(is_horizontal)
             self.line_list[i].flatten(max_distance, min_val, max_val, is_horizontal)
-
-    def poly(self, img_param):
-        copied = copy.deepcopy(img_param)
-        for i in range(len(self.line_list)):
-            lineOne = self.line_list[i].all_point_list
-            pts = np.array(lineOne, np.int32)
-            isClosed = False
-            color = tuple(self.line_list[i].color)
-            cv2.polylines(copied, [pts], isClosed, color)
-        return copied
-        # (img: Any,
-        # pts: Any,
-        # isClosed: Any,
-        # color: Any,
-        # thickness: Any = None,
-        # lineType: Any = None,
-        # shift: Any = None)
