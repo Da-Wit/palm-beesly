@@ -85,10 +85,27 @@ class LineOne:
 
         return min_val, max_val
 
-    # TODO U자형 선같은 경우를 고려해서 x좌표 or y좌표가 같은
-    # 모든 좌표의 y좌표 or x좌표를 더하지 말고 좌표의 거리가
-    # n 이하일 경우에만 더하도록 바꾸기
-    def flatten_on_one_x_or_y(self, filtered, max_distance, index):
+    def separate(self, filtered, flattening_distance, index):
+        copied = copy.deepcopy(filtered)
+        separated = []
+        temp = []
+        # TODO 변수 index, idx, filtered 이름 다시 짓기
+        # 변수명이 not specific, not detail하다.
+
+        idx = abs(index - 1)
+        for i in copied:
+            if len(temp) == 0:
+                temp.append(i)
+            elif abs(temp[-1][idx] - i[idx]) <= flattening_distance:
+                temp.append(i)
+            else:
+                separated.append(temp)
+                temp = [i]
+        if len(temp) > 0:
+            separated.append(temp)
+        return separated
+
+    def flatten_on_one_x_or_y(self, filtered, index):
         idx = abs(index - 1)
         sum_val = 0
         for i in filtered:
@@ -100,7 +117,7 @@ class LineOne:
 
         return [result]
 
-    def flatten(self, max_distance, min_val, max_val, is_horizontal):
+    def flatten(self, flattening_distance, min_val, max_val, is_horizontal):
         flattened = []
 
         for i in range(min_val, max_val + 1):
@@ -113,8 +130,11 @@ class LineOne:
 
             if len(flattened_on_one_x_or_y) == 0:
                 continue
-            elif len(flattened_on_one_x_or_y) > 1:
-                flattened_on_one_x_or_y = self.flatten_on_one_x_or_y(flattened_on_one_x_or_y, max_distance, index)
-            flattened = flattened + flattened_on_one_x_or_y
+            elif len(flattened_on_one_x_or_y) == 1:
+                flattened = flattened + flattened_on_one_x_or_y
+            else:
+                separated = self.separate(flattened_on_one_x_or_y, flattening_distance, index)
+                for i in separated:
+                    flattened += self.flatten_on_one_x_or_y(i, index)
 
         self.all_point_list = flattened
