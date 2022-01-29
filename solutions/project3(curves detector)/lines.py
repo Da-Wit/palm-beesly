@@ -85,14 +85,10 @@ class Lines:
                 self.line_list[list_of_index_of_close_lines[random_index]].add_point(point)
 
             else:
-                min_gap = filtered_lines[0]['gap']
-                min_gap_idx = filtered_lines[0]['index']
-                for index_of_line in range(1, len(filtered_lines)):
-                    if min_gap > filtered_lines[index_of_line]['gap']:
-                        min_gap = filtered_lines[index_of_line]['gap']
-                        min_gap_idx = filtered_lines[index_of_line]['index']
+                min_gap_line = min(filtered_lines, key=lambda line: line['gap'])
+                index = min_gap_line['index']
 
-                self.line_list[min_gap_idx].add_point(point)
+                self.line_list[index].add_point(point)
 
     def filter_by_line_length(self, min_length):
         line_list = copy.deepcopy(self.line_list)
