@@ -2,7 +2,7 @@ import cv2
 import copy
 from lines import Lines
 import numpy as np
-import trackbar
+import timeit
 
 
 # 인풋으로 받은 캐니처리만 된 이미지에서 좌, 우, 위, 아래로 grayscle값이
@@ -122,13 +122,15 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
          number_of_lines_to_leave, flattening_distance, both=True, is_horizontal=True):
     copied = copy.deepcopy(img_param)
     height, width = copied.shape[:2]
+    horizontal_img = np.zeros((height, width, 1), dtype=np.uint8)
+    vertical_img = np.zeros((height, width, 1), dtype=np.uint8)
 
     # Finding lines part
-    horizontal_img = np.zeros((height, width, 1), dtype=np.uint8)
+    start = timeit.default_timer()
     horizontal_lines = find_horizontal_lines(copied, min_grayscale, max_grayscale, max_line_distance)
-    vertical_img = np.zeros((height, width, 1), dtype=np.uint8)
     vertical_lines = find_vertical_lines(copied, min_grayscale, max_grayscale, max_line_distance)
-
+    stop = timeit.default_timer()
+    print(round(stop - start, 6))
     # # Filtering part
     # horizontal_lines.filter_by_line_length(min_line_length)
     # vertical_lines.filter_by_line_length(min_line_length)
@@ -179,59 +181,15 @@ if __name__ == "__main__":
     number_of_lines_to_leave = 10  # Default value is 10
     flattening_distance = 4  # Default value is 4
 
-    horizontal_img, vertical_img = main(img,
-                                        min_grayscale,
-                                        max_grayscale,
-                                        min_line_length,
-                                        max_line_distance,
-                                        number_of_lines_to_leave,
-                                        flattening_distance)
-
-    simplified_get_horizontal = lambda min_grayscale, \
-                                       max_grayscale, \
-                                       max_line_distance, \
-                                       flattening_distance: main(img,
-                                                                 min_grayscale,
-                                                                 max_grayscale,
-                                                                 min_line_length,
-                                                                 max_line_distance,
-                                                                 number_of_lines_to_leave,
-                                                                 flattening_distance,
-                                                                 both=False,
-                                                                 is_horizontal=True)
-
-    simplified_get_vertical = lambda min_grayscale, \
-                                     max_grayscale, \
-                                     max_line_distance, \
-                                     flattening_distance: main(img, min_grayscale,
-                                                               max_grayscale,
-                                                               min_line_length,
-                                                               max_line_distance,
-                                                               number_of_lines_to_leave,
-                                                               flattening_distance,
-                                                               both=False, is_horizontal=False)
+    main(img,
+         min_grayscale,
+         max_grayscale,
+         min_line_length,
+         max_line_distance,
+         number_of_lines_to_leave,
+         flattening_distance)
 
     cv2.imshow("original", img)
-    cv2.imshow("horizontal", horizontal_img)
-    cv2.imshow("vertical", vertical_img)
-
-    on_min_gray_changed_hori = lambda track_val: trackbar.on_min_gray_changed(track_val,
-                                                                              'horizontal',
-                                                                              simplified_get_horizontal)
-    on_max_gray_changed_hori = lambda track_val: trackbar.on_max_gray_changed(track_val,
-                                                                              'horizontal',
-                                                                              simplified_get_horizontal)
-    on_line_distance_changed_hori = lambda track_val: trackbar.on_line_distance_changed(track_val,
-                                                                                        'horizontal',
-                                                                                        simplified_get_horizontal)
-    on_flattening_distance_changed_hori = lambda track_val: trackbar.on_flattening_distance_changed(track_val,
-                                                                                                    'horizontal',
-                                                                                                    simplified_get_horizontal)
-
-    cv2.createTrackbar('min_gray', 'horizontal', min_grayscale, 255, on_min_gray_changed_hori)
-    cv2.createTrackbar('max_gray', 'horizontal', max_grayscale, 255, on_max_gray_changed_hori)
-    cv2.createTrackbar('line_distance', 'horizontal', max_line_distance, 30, on_line_distance_changed_hori)
-    cv2.createTrackbar('flattening', 'horizontal', flattening_distance, 15, on_flattening_distance_changed_hori)
 
     print("Done")
 
