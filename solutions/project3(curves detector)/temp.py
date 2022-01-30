@@ -1,91 +1,72 @@
-import copy
+import numpy as np
+from lines import Lines
 
 
-def get_min_max_of_x_or_y(all_point_list, is_horizontal):
+# import cv2 as cv
+# import timeit
+#
+# img = cv.imread("C:/Users/think/workspace/palm-beesly/test_img/sample5.4.png")
+# img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+#
+#
+
+def find_one_orientation_lines(expressed, max_line_distance, is_horizontal):
+    lines = Lines()
+    min_j_gap = 3
+
     if is_horizontal:
-        index = 0  # index of x
+        i = 1  # x
+        j = 2  # y
     else:
-        index = 1  # index of y
+        i = 2  # y
+        j = 1  # x
 
-    max_val = max(all_point_list, key=lambda point: point[index])[index]
-    min_val = min(all_point_list, key=lambda point: point[index])[index]
+    pre_i = expressed[0][i]
+    pre_j = expressed[0][j]
+    continued_i = expressed[0][i]
+    continued_j = expressed[0][j]
+    was_continued = False
 
-    return min_val, max_val
+    for idx in range(1, len(expressed)):
+        current = expressed[idx]
+        _, x, y = current
 
+        if pre_i != current[i]:
+            lines.handle_point([x, y], max_line_distance)
+            pre_i = current[i]
+            pre_j = current[j]
+            if was_continued:
+                if abs(continued_j - pre_j) > min_j_gap:
+                    if is_horizontal:
+                        lines.handle_point([continued_i, continued_j], max_line_distance)
+                    else:
+                        lines.handle_point([continued_j, continued_i], max_line_distance)
+                was_continued = False
 
-def separate(filtered, max_distance, index):
-    copied = copy.deepcopy(filtered)
-    separated = []
-    temp = []
-    # TODO 변수 index, idx, filtered, max_distance 이름 다시 짓기
-    # 불명확하고, max_distance는 main의 동명의 변수와 겹침
-
-    idx = abs(index - 1)
-
-    for i in copied:
-        if len(temp) == 0:
-            temp.append(i)
-        elif abs(temp[-1][idx] - i[idx]) <= max_distance:
-            temp.append(i)
+        elif abs(j - pre_j) > 1:
+            lines.handle_point([x, y], max_line_distance)
+            if was_continued:
+                if abs(continued_j - pre_j) > min_j_gap:
+                    if is_horizontal:
+                        lines.handle_point([x, continued_j], max_line_distance)
+                    else:
+                        lines.handle_point([continued_j, y], max_line_distance)
+                was_continued = False
+            pre_j = current[j]
         else:
-            separated.append(temp)
-            temp = [i]
-    if len(temp) > 0:
-        separated.append(temp)
-    return separated
+            was_continued = True
+            continued_j = current[j]
+            continued_i = current[i]
 
+        if idx % 200 == 199:
+            lines.renew_work_area([x, y], max_line_distance)
+    return lines
 
-def flatten_on_one_x_or_y(filtered, index):
-    idx = abs(index - 1)
-    sum_val = 0
-    for i in filtered:
-        sum_val += i[idx]
-    avg = round(sum_val / len(filtered))
-    result = [0, 0]
-    result[index] = filtered[0][index]
-    result[idx] = avg
-
-    return [result]
-
-
-# TODO max_distance를  실행 시 두 줄이 한 줄로 나타나는
-def flatten(all_point_list, max_distance, min_val, max_val, is_horizontal):
-    flattened = []
-
-    for i in range(min_val, max_val + 1):
-        if is_horizontal:
-            index = 0  # index of x
-        else:
-            index = 1  # index of y
-
-        flattened_on_one_x_or_y = list(filter(lambda point: point[index] == i, all_point_list))
-
-        if len(flattened_on_one_x_or_y) == 0:
-            continue
-        elif len(flattened_on_one_x_or_y) == 1:
-            flattened = flattened + flattened_on_one_x_or_y
-        else:
-            a = [[176, 210], [176, 222], [176, 223], [176, 224]]
-            b = separate(flattened_on_one_x_or_y, 0, 0)
-            c = separate(flattened_on_one_x_or_y, 1, 0)
-            d = separate(flattened_on_one_x_or_y, 11, 0)
-            e = separate(flattened_on_one_x_or_y, 12, 0)
-            f = separate(flattened_on_one_x_or_y, 13, 0)
-
-            separated = separate(flattened_on_one_x_or_y, max_distance, index)
-            # if len(separated) > 1:
-            for i in separated:
-                flattened += flatten_on_one_x_or_y(i, index)
-
-
-a = [[176, 210], [176, 222], [176, 223], [176, 224]]
-b = separate(a, 0, 0)
-c = separate(a, 1, 0)
-d = separate(a, 11, 0)
-e = separate(a, 12, 0)
-f = separate(a, 13, 0)
-print("b", b)
-print("c", c)
-print("d", d)
-print("e", e)
-print("f", f)
+# lst = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+#
+# for gray, x, y in lst:
+#     print()
+#     print()
+#     print("gray", gray)
+#     print("x", x)
+#     print("y", y)

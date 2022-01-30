@@ -2,7 +2,6 @@ import cv2
 import copy
 from lines import Lines
 import numpy as np
-# import trackbar
 import timeit
 
 
@@ -61,84 +60,68 @@ def get_roi(img, min_grayscale=0):
     return copied[topmost:downmost, leftmost:rightmost]
 
 
-def express_img(img_param, min_grayscale, max_grayscale, is_horizontal):
-    height, width = img_param.shape[:2]
-    result = []
-    if is_horizontal:
-        loop_max = width
-    else:
-        loop_max = height
-
-    for i in range(loop_max):
-        if is_horizontal:
-            x = i
-            temp = [[img_param[y][x], x, y] for y in range(height) if
-                    img_param[y][x] > min_grayscale < max_grayscale]
-        else:
-            y = i
-            temp = [[img_param[y][x], x, y] for x in range(width) if
-                    img_param[y][x] > min_grayscale < max_grayscale]
-
-        if len(temp) > 0:
-            result += temp
-    return np.array(result, dtype=int)
+# def express_img(img_param, min_grayscale, max_grayscale, is_horizontal):
+#     height, width = img_param.shape[:2]
+#     result = []
+#     if is_horizontal:
+#         loop_max = width
+#     else:
+#         loop_max = height
+#
+#     for i in range(loop_max):
+#         if is_horizontal:
+#             x = i
+#             temp = [[img_param[y][x], x, y] for y in range(height) if
+#                     img_param[y][x] > min_grayscale < max_grayscale]
+#         else:
+#             y = i
+#             temp = [[img_param[y][x], x, y] for x in range(width) if
+#                     img_param[y][x] > min_grayscale < max_grayscale]
+#
+#         if len(temp) > 0:
+#             result += temp
+#     return result
 
 
 # 한 방향으로의 hline들의 리스트, nline을 리턴함
-def find_one_orientation_lines(expressed, max_line_distance, is_horizontal):
-    lines = Lines()
-    min_j_gap = 3
+def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line_distance, is_horizontal):
+    h, w = img_param.shape[:2]
 
     if is_horizontal:
-        i = 1  # x
-        j = 2  # y
+        first_for_loop_max = w
+        second_for_loop_max = h
     else:
-        i = 2  # y
-        j = 1  # x
+        first_for_loop_max = h
+        second_for_loop_max = w
 
-    pre_i = expressed[0][i]
-    pre_j = expressed[0][j]
-    continued_i = expressed[0][i]
-    continued_j = expressed[0][j]
-    was_continued = False
+    lines = Lines()
+    min_j_gap = 3
+    for i in range(first_for_loop_max):
+        find = False
+        prev_j = 0
+        for j in range(second_for_loop_max):
+            if is_horizontal:
+                x = i
+                y = j
+            else:
+                x = j
+                y = i
 
-    for idx in range(1, len(expressed)):
-        current = expressed[idx]
-        _, x, y = current
-
-        if pre_i != current[i]:
-            lines.renew_work_area([x, y], max_line_distance, is_horizontal)
-            lines.handle_point([x, y], max_line_distance)
-            if was_continued:
-                if abs(continued_j - pre_j) > min_j_gap:
-                    if is_horizontal:
-                        lines.handle_point([continued_i, continued_j], max_line_distance)
-                    else:
-                        lines.handle_point([continued_j, continued_i], max_line_distance)
-                was_continued = False
-            pre_i = current[i]
-            pre_j = current[j]
-
-
-        elif abs(j - pre_j) > 1:
-            lines.handle_point([x, y], max_line_distance)
-            if was_continued:
-                if abs(continued_j - pre_j) > min_j_gap:
-                    if is_horizontal:
-                        lines.handle_point([x, continued_j], max_line_distance)
-                    else:
-                        lines.handle_point([continued_j, y], max_line_distance)
-                was_continued = False
-            pre_j = current[j]
+            if img_param[y][x] > min_grayscale < max_grayscale and find is False:
+                find = True
+                lines.handle_point([x, y], max_line_distance)
+                prev_j = j
+            elif (min_grayscale >= img_param[y][x] or img_param[y][x] >= max_grayscale) and find is True:
+                find = False
+                if j - prev_j > min_j_gap:
+                    lines.handle_point([x, y], max_line_distance)
+        if is_horizontal:
+            x = i
+            y = 0
         else:
-            if was_continued is False:
-                was_continued = True
-                continued_i = current[i]
-                continued_j = current[j]
-
-            pre_j = current[j]
-            if pre_i != current[i]:
-                pre_i = current[i]
+            x = 0
+            y = i
+        lines.renew_work_area([x, y], max_line_distance, is_horizontal)
 
     return lines
 
@@ -156,16 +139,17 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     copied = copy.deepcopy(img_param)
     height, width = copied.shape[:2]
 
-    # expressed = express_img(copied, min_grayscale, max_grayscale)
     hori_img = np.zeros((height, width, 1), dtype=np.uint8)
     vert_img = np.zeros((height, width, 1), dtype=np.uint8)
-    expressed = express_img(img_param, min_grayscale, max_grayscale, is_horizontal)
+    # expressed = express_img(img_param, min_grayscale, max_grayscale, is_horizontal)
     # Finding lines part
     start = timeit.default_timer()
-    horizontal_lines = find_one_orientation_lines(expressed, max_line_distance, is_horizontal=True)
-    vertical_lines = find_one_orientation_lines(expressed, max_line_distance, is_horizontal=False)
+    horizontal_lines = find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line_distance,
+                                                  is_horizontal=True)
+    vertical_lines = find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line_distance,
+                                                is_horizontal=False)
     stop = timeit.default_timer()
-    print("Finding part", stop - start)
+    print("Finding part", round(stop - start, 6))
     sum_timer += stop - start
 
     # # Filtering part
@@ -196,10 +180,6 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
 
     _, hori_thresh = cv2.threshold(hori_img, 0, 255, cv2.THRESH_BINARY)
     _, vert_thresh = cv2.threshold(vert_img, 0, 255, cv2.THRESH_BINARY)
-    # hori_thresh = cv2.cvtColor(cv2.CV_8UC1)
-    # cv2.cvtColor(hori_thresh, cv2.COLOR_BGR2GRAY)
-    # cv2.cvtColor(vert_thresh, cv2.COLOR_BGR2GRAY)
-    # vert_thresh = cv2.cvtColor(cv2.CV_8UC1)
     hori_img = cv2.ximgproc.thinning(cv2.cvtColor(hori_thresh, cv2.COLOR_BGR2GRAY))
     vert_img = cv2.ximgproc.thinning(cv2.cvtColor(vert_thresh, cv2.COLOR_BGR2GRAY))
 
@@ -240,51 +220,9 @@ if __name__ == "__main__":
                       number_of_lines_to_leave,
                       flattening_distance)
 
-    # simplified_get_horizontal = lambda min_grayscale, \
-    #                                    max_grayscale, \
-    #                                    max_line_distance, \
-    #                                    flattening_distance: main(img,
-    #                                                              min_grayscale,
-    #                                                              max_grayscale,
-    #                                                              min_line_length,
-    #                                                              max_line_distance,
-    #                                                              number_of_lines_to_leave,
-    #                                                              flattening_distance,
-    #                                                              both=False,
-    #                                                              is_horizontal=True)
-    #
-    # simplified_get_vertical = lambda min_grayscale, \
-    #                                  max_grayscale, \
-    #                                  max_line_distance, \
-    #                                  flattening_distance: main(img, min_grayscale,
-    #                                                            max_grayscale,
-    #                                                            min_line_length,
-    #                                                            max_line_distance,
-    #                                                            number_of_lines_to_leave,
-    #                                                            flattening_distance,
-    #                                                            both=False, is_horizontal=False)
-
     cv2.imshow("original", img)
     cv2.imshow("horizontal", hori)
     cv2.imshow("vertical", vert)
-
-    # on_min_gray_changed_hori = lambda track_val: trackbar.on_min_gray_changed(track_val,
-    #                                                                           'horizontal',
-    #                                                                           simplified_get_horizontal)
-    # on_max_gray_changed_hori = lambda track_val: trackbar.on_max_gray_changed(track_val,
-    #                                                                           'horizontal',
-    #                                                                           simplified_get_horizontal)
-    # on_line_distance_changed_hori = lambda track_val: trackbar.on_line_distance_changed(track_val,
-    #                                                                                     'horizontal',
-    #                                                                                     simplified_get_horizontal)
-    # on_flattening_distance_changed_hori = lambda track_val: trackbar.on_flattening_distance_changed(track_val,
-    #                                                                                                 'horizontal',
-    #                                                                                                 simplified_get_horizontal)
-
-    # cv2.createTrackbar('min_gray', 'horizontal', min_grayscale, 255, on_min_gray_changed_hori)
-    # cv2.createTrackbar('max_gray', 'horizontal', max_grayscale, 255, on_max_gray_changed_hori)
-    # cv2.createTrackbar('line_distance', 'horizontal', max_line_distance, 30, on_line_distance_changed_hori)
-    # cv2.createTrackbar('flattening', 'horizontal', flattening_distance, 15, on_flattening_distance_changed_hori)
 
     print("Done")
 
