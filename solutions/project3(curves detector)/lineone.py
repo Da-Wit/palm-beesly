@@ -1,6 +1,7 @@
 import copy
 import solutions.utils as utils
 import random
+import numpy as np
 
 
 class LineOne:
@@ -21,8 +22,12 @@ class LineOne:
 
     # point는 [x, y]꼴임
     def add_point(self, point):
-        self.all_point_list.append(point)
-        self.point_list_in_work_area.append(point)
+        if isinstance(self.all_point_list, np.ndarray):
+            self.all_point_list = np.append(self.all_point_list, [point], axis=0)
+            self.point_list_in_work_area = np.append(self.point_list_in_work_area, [point], axis=0)
+        else:
+            self.all_point_list = np.array([point], dtype=int)
+            self.point_list_in_work_area = np.array([point], dtype=int)
 
     def is_continuable(self, external_point, max_distance=3):
         for idx in range(len(self.point_list_in_work_area)):
@@ -62,17 +67,18 @@ class LineOne:
 
         return avg_gradient
 
-    def renew_work_area(self, external_point, max_distance):
+    def renew_work_area(self, external_point, max_distance, is_horizontal):
         list_len = len(self.point_list_in_work_area)
-        number_of_deleted_point = 0
+        indices_to_delete = []
+        i = 0 if is_horizontal else 1
+
         for idx in range(list_len):
-            real_idx = idx - number_of_deleted_point
-            current_point = self.point_list_in_work_area[real_idx]
-            x_gap = abs(current_point[0] - external_point[0])
-            y_gap = abs(current_point[1] - external_point[1])
-            if x_gap >= max_distance and y_gap >= max_distance:
-                del self.point_list_in_work_area[real_idx]
-                number_of_deleted_point += 1
+            current_point = self.point_list_in_work_area[idx]
+            gap = abs(current_point[i] - external_point[i])
+
+            if gap >= max_distance:
+                indices_to_delete.append(idx)
+        self.point_list_in_work_area = np.delete(self.point_list_in_work_area, indices_to_delete, 0)
 
     def get_min_max_of_x_or_y(self, is_horizontal):
         if is_horizontal:
