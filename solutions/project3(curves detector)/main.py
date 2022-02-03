@@ -72,10 +72,7 @@ def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line
         second_for_loop_max = w
 
     lines = Lines()
-    min_j_gap = 3
     for i in range(first_for_loop_max):
-        find = False
-        prev_j = 0
         for j in range(second_for_loop_max):
             if is_horizontal:
                 x = i
@@ -84,14 +81,9 @@ def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line
                 x = j
                 y = i
 
-            if img_param[y][x] > min_grayscale < max_grayscale and find is False:
-                find = True
+            if img_param[y][x] > min_grayscale < max_grayscale:
                 lines.handle_point([x, y], max_line_distance)
-                prev_j = j
-            elif (min_grayscale >= img_param[y][x] or img_param[y][x] >= max_grayscale) and find is True:
-                find = False
-                if j - prev_j > min_j_gap:
-                    lines.handle_point([x, y], max_line_distance)
+
         if is_horizontal:
             x = i
             y = 0
@@ -131,7 +123,8 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     vertical_lines = find_vertical_lines(copied, min_grayscale, max_grayscale, max_line_distance)
     stop = timeit.default_timer()
     print(round(stop - start, 6))
-    # # Filtering part
+
+    # Filtering part
     # horizontal_lines.filter_by_line_length(min_line_length)
     # vertical_lines.filter_by_line_length(min_line_length)
 
@@ -139,27 +132,34 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     horizontal_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
     vertical_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
 
-    # Visualizing part1
-    hori_before_flattening = horizontal_lines.visualize_lines(horizontal_img, color=True)
-    vert_before_flattening = vertical_lines.visualize_lines(vertical_img, color=True)
-
-    cv2.imshow("hori_before_flattening", hori_before_flattening)
-    cv2.imshow("vert_before_flattening", vert_before_flattening)
+    # cv2.imshow("hori_before_flattening", hori_before_flattening)
+    # cv2.imshow("vert_before_flattening", vert_before_flattening)
 
     # Flattening part
-    horizontal_lines.flatten(flattening_distance, is_horizontal=True)
-    vertical_lines.flatten(flattening_distance, is_horizontal=True)
+    # horizontal_lines.flatten(flattening_distance, is_horizontal=True)
+    # vertical_lines.flatten(flattening_distance, is_horizontal=True)
 
-    # Visualizing part2
+    # Visualizing part
     horizontal_img = horizontal_lines.visualize_lines(horizontal_img, color=True)
     vertical_img = horizontal_lines.visualize_lines(vertical_img, color=True)
 
+    cv2.imshow("hori before thinning", horizontal_img)
+    cv2.imshow("vert before thinning", vertical_img)
+
+    hori_gray = cv2.cvtColor(horizontal_img, cv2.COLOR_BGR2GRAY)
+    _, hori_thresh = cv2.threshold(hori_gray, 1, 255, cv2.THRESH_BINARY)
+    thinned_hori = cv2.ximgproc.thinning(hori_thresh)
+
+    vert_gray = cv2.cvtColor(vertical_img, cv2.COLOR_BGR2GRAY)
+    _, vert_thresh = cv2.threshold(vert_gray, 1, 255, cv2.THRESH_BINARY)
+    thinned_vert = cv2.ximgproc.thinning(vert_thresh)
+
     if both:
-        return horizontal_img, vertical_img
+        return thinned_hori, thinned_vert
     elif is_horizontal:
-        return horizontal_img
+        return thinned_hori
     else:
-        return vertical_img
+        return thinned_vert
 
 
 if __name__ == "__main__":
@@ -181,15 +181,18 @@ if __name__ == "__main__":
     number_of_lines_to_leave = 10  # Default value is 10
     flattening_distance = 4  # Default value is 4
 
-    main(img,
-         min_grayscale,
-         max_grayscale,
-         min_line_length,
-         max_line_distance,
-         number_of_lines_to_leave,
-         flattening_distance)
+    hori, vert = main(img,
+                      min_grayscale,
+                      max_grayscale,
+                      min_line_length,
+                      max_line_distance,
+                      number_of_lines_to_leave,
+                      flattening_distance)
 
     cv2.imshow("original", img)
+
+    cv2.imshow("hori", hori)
+    cv2.imshow("vert", vert)
 
     print("Done")
 
