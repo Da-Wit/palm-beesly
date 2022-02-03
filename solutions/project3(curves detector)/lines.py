@@ -26,19 +26,6 @@ class Lines:
                 index_list.append(idx)
         return index_list
 
-    def set_line_info(self, point, max_distance):
-        find = False
-        for line in self.line_list:
-            if line.is_continuable(point, max_distance) is True:
-                find = True
-                line.add_point(point)
-        if find is False:
-            line = LineOne(self.number_of_front_points_to_find_slope)
-            self.line_list.append(line)
-            line.add_point(point)
-
-        return find
-
     def handle_point(self, point, max_distance):
         list_of_index_of_close_lines = self.get_index_list_of_close_lines(point, max_distance)
         number_of_close_lines = len(list_of_index_of_close_lines)
