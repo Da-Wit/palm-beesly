@@ -8,6 +8,7 @@ import timeit
 # 인풋으로 받은 캐니처리만 된 이미지에서 좌, 우, 위, 아래로 grayscle값이
 # min_grayscle 매개변수보다 큰 부분부터 잘라낸 이미지를 리턴함
 # 즉, 쓸데없는 빈 공간을 제거해서 연산을 줄임
+# TODO raw input image 가지고 ROI를 구하도록 바꾸기
 def get_roi(img, min_grayscale=0):
     copied = copy.deepcopy(img)
     height, width = copied.shape[:2]
@@ -62,14 +63,14 @@ def get_roi(img, min_grayscale=0):
 
 # 한 방향으로의 hline들의 리스트, nline을 리턴함
 def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line_distance, is_horizontal):
-    h, w = img_param.shape[:2]
+    height, width = img_param.shape[:2]
 
     if is_horizontal:
-        first_for_loop_max = w
-        second_for_loop_max = h
+        first_for_loop_max = width
+        second_for_loop_max = height
     else:
-        first_for_loop_max = h
-        second_for_loop_max = w
+        first_for_loop_max = height
+        second_for_loop_max = width
 
     lines = Lines()
     for i in range(first_for_loop_max):
@@ -95,21 +96,8 @@ def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line
     return lines
 
 
-# find_one_orientation_lines 함수를 사용해 가로선 nline 찾기
-def find_horizontal_lines(img_param, min_grayscale, max_grayscale, max_line_distance):
-    return find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line_distance,
-                                      is_horizontal=True)
-
-
-# find_one_orientation_lines 함수를 사용해 세로선 nline 찾기
-def find_vertical_lines(img_param, min_grayscale, max_grayscale, max_line_distance):
-    return find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line_distance,
-                                      is_horizontal=False)
-
-
 # 이미지와 값 조정 변수를 넣어주면 최종적으로 시각화된 이미지를 가로, 세로로 나눠 리턴함
 # 외부에서 최종적으로 사용할 함수
-
 def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_distance,
          number_of_lines_to_leave, flattening_distance, both=True, is_horizontal=True):
     copied = copy.deepcopy(img_param)
@@ -119,8 +107,10 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
 
     # Finding lines part
     start = timeit.default_timer()
-    horizontal_lines = find_horizontal_lines(copied, min_grayscale, max_grayscale, max_line_distance)
-    vertical_lines = find_vertical_lines(copied, min_grayscale, max_grayscale, max_line_distance)
+    horizontal_lines = find_one_orientation_lines(copied, min_grayscale, max_grayscale, max_line_distance,
+                                                  is_horizontal=True)
+    vertical_lines = find_one_orientation_lines(copied, min_grayscale, max_grayscale, max_line_distance,
+                                                is_horizontal=True)
     stop = timeit.default_timer()
     print(round(stop - start, 6))
 
@@ -148,7 +138,8 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
 
     hori_gray = cv2.cvtColor(horizontal_img, cv2.COLOR_BGR2GRAY)
     _, hori_thresh = cv2.threshold(hori_gray, 1, 255, cv2.THRESH_BINARY)
-    thinned_hori = cv2.ximgproc.thinning(hori_thresh)
+    thinned_hori = cv2.ximgproc.thinning(
+        hori_thresh)  # to use this function paste it: pip install opencv-contrib-python
 
     vert_gray = cv2.cvtColor(vertical_img, cv2.COLOR_BGR2GRAY)
     _, vert_thresh = cv2.threshold(vert_gray, 1, 255, cv2.THRESH_BINARY)
