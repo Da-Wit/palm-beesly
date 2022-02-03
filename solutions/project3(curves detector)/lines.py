@@ -84,21 +84,6 @@ class Lines:
                 line_list.remove(lineOne)  # 길이가 3픽셀도 안되는 선은 세로선이거나 잡음이므로 지움.
         self.line_list = line_list
 
-    def temp_fucntion(self, img_param, image_name):
-        directory_path = "C:/Users/think/workspace/palm-beesly/test_img"
-        copied_img = copy.deepcopy(img_param)
-        height, width = copied_img.shape[:2]
-        for_showing = np.zeros((height, width, 1), dtype=np.uint8)
-        count = 0
-
-        for lineOne in self.line_list:
-            for point in lineOne.all_point_list:
-                x, y = point
-                for_showing[y][x] = 255
-            cv2.imwrite(os.path.join(directory_path, f"{image_name}{count}.png"), for_showing)
-            for_showing = for_showing * 0
-            count += 1
-
     def visualize_lines(self, img_param, color=False):
         copied_img = copy.deepcopy(img_param)
         height, width = copied_img.shape[:2]
