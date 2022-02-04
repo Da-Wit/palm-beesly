@@ -221,9 +221,9 @@ def find_index(list_param, condition_funct):
     return None
 
 
-def find_indices(list_param, condition_funct):
+def find_indices(list_param, key):
     result = []
     for index in range(len(list_param)):
-        if condition_funct(index, list_param[index]) is True:
+        if key(index, list_param[index]) is True:
             result.append(index)
     return result

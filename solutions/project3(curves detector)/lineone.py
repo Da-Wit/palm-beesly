@@ -4,13 +4,13 @@ import random
 
 
 class LineOne:
-    def __init__(self, number_of_front_points_to_find_slope):
+    def __init__(self, number_of_front_points_to_find_slope, unique_num):
         self.all_point_list = []
         self.point_list_in_work_area = []
         self.own_slope = -1
         self.number_of_front_points_to_find_slope = number_of_front_points_to_find_slope
         self.changed_after_calculating_slope = True
-
+        self.unique_num = unique_num
         # color는 디버깅 용으로 hline별로 쉽게 구별하기 위해 넣은 변수임
         # TODO 실제 개발 완료 시 color 멤버 변수 제거하기
         random_B = random.randint(0, 255)
@@ -23,6 +23,10 @@ class LineOne:
     def add_point(self, point):
         self.all_point_list.append(point)
         self.point_list_in_work_area.append(point)
+
+    def set_unique_num_to(self, unique_num):
+        self.unique_num = unique_num
+        return True
 
     def is_continuable(self, external_point, max_distance=3):
         for idx in range(len(self.point_list_in_work_area)):

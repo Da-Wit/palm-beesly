@@ -5,6 +5,8 @@ import copy
 import cv2
 import os
 
+from solutions import utils
+
 
 class Lines:
     def __init__(self):
@@ -26,7 +28,7 @@ class Lines:
                 index_list.append(idx)
         return index_list
 
-    def handle_point(self, point, max_distance):
+    def handle_point(self, point, max_distance, unique_num):
         list_of_index_of_close_lines = self.get_index_list_of_close_lines(point, max_distance)
         number_of_close_lines = len(list_of_index_of_close_lines)
 
@@ -34,7 +36,7 @@ class Lines:
         # 새로운 hline 만들어서 nline에 append
         # 즉, 새로운 선 발견했다고 추정해 새로운 선 추가
         if number_of_close_lines == 0:
-            lineOne = LineOne(self.number_of_front_points_to_find_slope)
+            lineOne = LineOne(self.number_of_front_points_to_find_slope, unique_num)
             lineOne.add_point(point)
             self.add_line(lineOne)
 
@@ -78,15 +80,17 @@ class Lines:
                 self.line_list[index].add_point(point)
 
     def filter_by_line_length(self, min_length):
-        line_list = copy.deepcopy(self.line_list)
-        for lineOne in line_list:
-            if len(lineOne.all_point_list) < min_length:
-                line_list.remove(lineOne)  # 길이가 3픽셀도 안되는 선은 세로선이거나 잡음이므로 지움.
-        self.line_list = line_list
+        self.line_list = [
+            lineOne \
+            for lineOne in self.line_list \
+            if len(lineOne.all_point_list) >= min_length
+        ]
 
     def visualize_lines(self, img_param, color=False):
         copied_img = copy.deepcopy(img_param)
         height, width = copied_img.shape[:2]
+        copied_img = np.zeros((height, width, 1), dtype=np.uint8)
+
         if color:
             copied_img = cv2.cvtColor(copied_img, cv2.COLOR_GRAY2BGR)
             temp = np.zeros((height, width, 3), dtype=np.uint8)
@@ -130,3 +134,89 @@ class Lines:
         for i in range(len(self.line_list)):
             min_val, max_val = self.line_list[i].get_min_max_of_x_or_y(is_horizontal)
             self.line_list[i].flatten(max_distance, min_val, max_val, is_horizontal)
+
+    def is_connectable(self, lineOne1, lineOne2, max_distance):
+        for point1 in lineOne1.all_point_list:
+            for point2 in lineOne2.all_point_list:
+                distance = utils.distance_between(point1, point2)
+                if distance < max_distance:
+                    return True
+        return False
+
+    # TODO change this stupid function's and variables' name
+    def pre_combine(self, max_distance):
+        new_line_list = []
+        line_list = copy.deepcopy(self.line_list)
+
+        for lineOne1 in line_list:
+            new_unique_num = lineOne1.unique_num
+            recursive_same_indices = []
+            for lineOne2 in new_line_list:
+                if self.is_connectable(lineOne1, lineOne2, max_distance):
+                    same_indices = utils.find_indices(new_line_list,
+                                                      lambda index, value:
+                                                      value.unique_num == lineOne2.unique_num)
+                    recursive_same_indices += same_indices
+
+            for index in recursive_same_indices:
+                new_line_list[index].set_unique_num_to(new_unique_num)
+
+            new_line_list.append(lineOne1)
+        return new_line_list
+        # for i in range(len(line_list)):
+        #     for j in range(len(new_line_list)):
+        #         if self.is_connectable(self.line_list[i]['hline'], new_line_list[j]['hline'], min_distance):
+        #             index_list_of_same_index = utils.find_indices(new_line_list,
+        #                                                           lambda index, value: value['index'] ==
+        #                                                                                new_line_list[j][
+        #                                                                                    'index'])
+        #
+        #             for index_of_same_index in index_list_of_same_index:
+        #                 new_line_list[index_of_same_index]['index'] = self.line_list[i]['index']
+        #             # new_line_list[j]['index'] = self.line_list[i]['index']
+
+        # a = 6
+        # a1 = 0
+        # a1 = round(a * 0.25)
+        # a1 = round(a * 0.5)
+        # a1 = round(a * 0.75)
+        # a1 = a
+        #
+        # i = 0
+        # while True:
+        #     lineOne = line_list[i]
+        #     line_len = len(lineOne.all_point_list)
+        #
+        #     first_idx = 0
+        #     one_fourth_idx = round(line_len * (1 / 4)) - 1
+        #     middle_idx = round(line_len * (1 / 2)) - 1
+        #     three_fourth_idx = round(line_len * (3 / 4)) - 1
+        #     last_idx = line_len - 1
+        #     indices = list({first_idx, one_fourth_idx, middle_idx, three_fourth_idx, last_idx})
+
+    def combine_absolutely(self, new_line_list):
+        line_list = copy.deepcopy(new_line_list)
+        unique_nums = []
+        combined_absolutely = []
+        for lineOne in line_list:
+            if unique_nums.count(lineOne.unique_num) == 0:
+                unique_nums.append(lineOne.unique_num)
+                combined_absolutely.append(lineOne)
+            else:
+                index = unique_nums.index(lineOne.unique_num)
+                combined_absolutely[index].all_point_list.extend(lineOne.all_point_list)
+
+        # for i in range(len(new_line_list)):
+        #     if unique_nums.count(new_line_list[i].unique_num) == 0:
+        #         unique_nums.append(new_line_list[i].unique_num)
+        #         combined_absolutely.append([])
+        # for i in range(len(new_line_list)):
+        #     index = unique_nums.index(new_line_list[i]['index'])
+        #     combined_absolutely[index].extend(new_line_list[i]['hline'])
+        return combined_absolutely
+
+    # TODO change variable name max_distance to something another
+    def combine(self, max_distance):
+        pre_combined = self.pre_combine(max_distance)
+        absolutely_combined = self.combine_absolutely(pre_combined)
+        self.line_list = absolutely_combined

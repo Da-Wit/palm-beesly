@@ -73,6 +73,7 @@ def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line
         second_for_loop_max = width
 
     lines = Lines()
+    unique_num = 0
     for i in range(first_for_loop_max):
         for j in range(second_for_loop_max):
             if is_horizontal:
@@ -83,7 +84,8 @@ def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line
                 y = i
 
             if img_param[y][x] > min_grayscale < max_grayscale:
-                lines.handle_point([x, y], max_line_distance)
+                lines.handle_point([x, y], max_line_distance, unique_num)
+                unique_num += 1
 
         if is_horizontal:
             x = i
@@ -100,27 +102,37 @@ def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line
 # 외부에서 최종적으로 사용할 함수
 def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_distance,
          number_of_lines_to_leave, flattening_distance, both=True, is_horizontal=True):
+    start = timeit.default_timer()
     copied = copy.deepcopy(img_param)
     height, width = copied.shape[:2]
     horizontal_img = np.zeros((height, width, 1), dtype=np.uint8)
     vertical_img = np.zeros((height, width, 1), dtype=np.uint8)
 
     # Finding lines part
-    start = timeit.default_timer()
+
     horizontal_lines = find_one_orientation_lines(copied, min_grayscale, max_grayscale, max_line_distance,
                                                   is_horizontal=True)
     vertical_lines = find_one_orientation_lines(copied, min_grayscale, max_grayscale, max_line_distance,
                                                 is_horizontal=True)
-    stop = timeit.default_timer()
-    print(round(stop - start, 6))
+
+    # Visualizing part
+    horizontal_img = horizontal_lines.visualize_lines(horizontal_img, color=True)
+    vertical_img = vertical_lines.visualize_lines(vertical_img, color=True)
+
+    cv2.imshow("hori before combining", horizontal_img)
+    cv2.imshow("vert before combining", vertical_img)
+
+    combine_max_distance = 4
+    horizontal_lines.combine(combine_max_distance)
+    vertical_lines.combine(combine_max_distance)
 
     # Filtering part
-    # horizontal_lines.filter_by_line_length(min_line_length)
-    # vertical_lines.filter_by_line_length(min_line_length)
+    horizontal_lines.filter_by_line_length(min_line_length)
+    vertical_lines.filter_by_line_length(min_line_length)
 
     # Leaving long lines part
-    horizontal_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
-    vertical_lines.leave_long_lines(number_of_lines_to_leave=number_of_lines_to_leave)
+    horizontal_lines.leave_long_lines(number_of_lines_to_leave)
+    vertical_lines.leave_long_lines(number_of_lines_to_leave)
 
     # cv2.imshow("hori_before_flattening", hori_before_flattening)
     # cv2.imshow("vert_before_flattening", vert_before_flattening)
@@ -131,10 +143,10 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
 
     # Visualizing part
     horizontal_img = horizontal_lines.visualize_lines(horizontal_img, color=True)
-    vertical_img = horizontal_lines.visualize_lines(vertical_img, color=True)
+    vertical_img = vertical_lines.visualize_lines(vertical_img, color=True)
 
-    cv2.imshow("hori before thinning", horizontal_img)
-    cv2.imshow("vert before thinning", vertical_img)
+    cv2.imshow("hori after combining", horizontal_img)
+    cv2.imshow("vert after combining", vertical_img)
 
     hori_gray = cv2.cvtColor(horizontal_img, cv2.COLOR_BGR2GRAY)
     _, hori_thresh = cv2.threshold(hori_gray, 1, 255, cv2.THRESH_BINARY)
@@ -145,6 +157,9 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     _, vert_thresh = cv2.threshold(vert_gray, 1, 255, cv2.THRESH_BINARY)
     thinned_vert = cv2.ximgproc.thinning(vert_thresh)
 
+    stop = timeit.default_timer()
+    print(round(stop - start, 6))
+
     if both:
         return thinned_hori, thinned_vert
     elif is_horizontal:
@@ -154,7 +169,7 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
 
 
 if __name__ == "__main__":
-    image_path = "C:/Users/think/workspace/palm-beesly/test_img/sample5.4.png"
+    image_path = "C:/Users/think/workspace/palm-beesly/test_img/sample8.4.png"
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
     if img is None:
@@ -167,7 +182,7 @@ if __name__ == "__main__":
     max_grayscale = 200
 
     # The minimum number of dots in one line
-    min_line_length = 10  # Default value is 4
+    min_line_length = 4  # Default value is 4
     max_line_distance = 5  # Default value is 3
     number_of_lines_to_leave = 10  # Default value is 10
     flattening_distance = 4  # Default value is 4
@@ -182,8 +197,8 @@ if __name__ == "__main__":
 
     cv2.imshow("original", img)
 
-    cv2.imshow("hori", hori)
-    cv2.imshow("vert", vert)
+    # cv2.imshow("hori", hori)
+    # cv2.imshow("vert", vert)
 
     print("Done")
 
