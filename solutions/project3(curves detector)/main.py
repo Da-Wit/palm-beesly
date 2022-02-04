@@ -91,7 +91,7 @@ def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line
         else:
             x = 0
             y = i
-        lines.renew_work_area([x, y], max_line_distance)
+        lines.renew_work_area([x, y], max_line_distance, is_horizontal)
 
     return lines
 

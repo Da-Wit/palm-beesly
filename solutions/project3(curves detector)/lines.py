@@ -14,9 +14,9 @@ class Lines:
     def add_line(self, line):
         self.line_list.append(line)
 
-    def renew_work_area(self, point, max_distance):
+    def renew_work_area(self, point, max_distance, is_horizontal):
         for lineOne in self.line_list:
-            lineOne.renew_work_area(point, max_distance)
+            lineOne.renew_work_area(point, max_distance, is_horizontal)
 
     def get_index_list_of_close_lines(self, point, max_distance):
         index_list = []
@@ -119,12 +119,11 @@ class Lines:
         self.line_list = line_list
 
     def leave_long_lines(self, number_of_lines_to_leave=10):
-        self.sort()
-
         if number_of_lines_to_leave > len(self.line_list):
             print(
                 "Variable \"number_of_lines_to_leave\" is larger than the number of existing lines so execution of this function \"leave_long_lines\" has canceled.")
             return None
+        self.sort()
         self.line_list = self.line_list[:number_of_lines_to_leave]
 
     def flatten(self, max_distance, is_horizontal):

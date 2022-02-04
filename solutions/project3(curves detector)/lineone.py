@@ -62,15 +62,17 @@ class LineOne:
 
         return avg_gradient
 
-    def renew_work_area(self, external_point, max_distance):
+    def renew_work_area(self, external_point, max_distance, is_horizontal):
         list_len = len(self.point_list_in_work_area)
         number_of_deleted_point = 0
+        coordinate_idx = 0 if is_horizontal else 1
+
         for idx in range(list_len):
             real_idx = idx - number_of_deleted_point
             current_point = self.point_list_in_work_area[real_idx]
-            x_gap = abs(current_point[0] - external_point[0])
-            y_gap = abs(current_point[1] - external_point[1])
-            if x_gap >= max_distance and y_gap >= max_distance:
+            gap = abs(current_point[coordinate_idx] - external_point[coordinate_idx])
+
+            if gap >= max_distance:
                 del self.point_list_in_work_area[real_idx]
                 number_of_deleted_point += 1
 
