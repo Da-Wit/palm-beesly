@@ -26,34 +26,11 @@ img2 = img2 * 0
 img3 = img3 * 0
 img4 = img4 * 0
 # Default value is 0
-MIN_GRAYSCALE_VALUE_TO_BE_IDENTIFIED_AS_LINE = 10
+MIN_GRAY_TO_BE_LINE = 10
 
 # The minimum number of dots in one line
 # Default value is 4
 MIN_LINE_LENGTH = 10
-#  가로 선 찾기
-for i in range(0, w - 1):
-    find = False
-    for j in range(0, h - 1):
-        if img[j][i] > MIN_GRAYSCALE_VALUE_TO_BE_IDENTIFIED_AS_LINE and find is False:
-            find = True
-            set_line_info(nline, i, j)
-            # if set_line_info(nline, i, j) is True:
-            #     print(",", i, j, end='')  # 기존선에 점추가
-            # else:
-            #     print("\n새로운선[", i, j, "]")  # 새로운 선 발견
-        if img[j][i] == MIN_GRAYSCALE_VALUE_TO_BE_IDENTIFIED_AS_LINE and find is True:
-            find = False
-
-#  세로 선 찾기
-for j in range(0, h - 1):
-    find = False
-    for i in range(0, w - 1):
-        if img[j][i] > MIN_GRAYSCALE_VALUE_TO_BE_IDENTIFIED_AS_LINE and find is False:
-            find = True
-            set_line_info(nline2, i, j)
-        if img[j][i] == MIN_GRAYSCALE_VALUE_TO_BE_IDENTIFIED_AS_LINE and find is True:
-            find = False
 
 
 def is_connected_hlines(hline1, hline2, min_distance):
@@ -146,14 +123,6 @@ for index_of_horizontal_hline_in_horizontal_nline in range(len(nline_copied)):
                                       hline_in_vertical_nline.all_point_list,
                                       index_of_horizontal_hline_in_horizontal_nline)
 
-for i in nline[:]:
-    if len(i.all_point_list) < MIN_LINE_LENGTH:
-        nline.remove(i)  # 길이가 3픽셀도 안되는 선은 세로선이거나 잡음이므로 지움.
-
-for i in nline2[:]:
-    if len(i.all_point_list) < MIN_LINE_LENGTH:
-        nline2.remove(i)  # 길이가 3픽셀도 안되는 선은 세로선이거나 잡음이므로 지움.
-
 unnamed = combine_unnamed_list_self(unnamed)
 unnamed = merge_same_index_nlines(unnamed)
 
@@ -169,37 +138,6 @@ img4 = get_img4(nline3, img4)
 
 # print("세로방향 ", len(nline2), " 개")
 
-for i in nline:
-    for k in i.all_point_list:
-        img2[k[1]][k[0]] = 255
-    # cv2.imshow("img2", img2)
-    #
-    # k = cv2.waitKey(0)
-    # if k == 27:  # Esc key to stop
-    #     cv2.destroyAllWindows()
-    #     exit(0)
-
-for i in nline:
-    # img2[i.pointlist[0][1]][i.pointlist[0][0]] = [0, 255, 255]
-    # img2[i.pointlist[-1][1]][i.pointlist[-1][0]] = [255, 0, 255]
-    img2[i.all_point_list[0][1]][i.all_point_list[0][0]] = 255
-    img2[i.all_point_list[-1][1]][i.all_point_list[-1][0]] = 255
-
-for i in nline2:
-    for k in i.all_point_list:
-        img3[k[1]][k[0]] = 255
-    # cv2.imshow("img3", img3)
-    #
-    # k = cv2.waitKey(0)
-    # if k == 27:  # Esc key to stop
-    #     cv2.destroyAllWindows()
-    #     exit(0)
-
-for i in nline2:
-    # img3[i.pointlist[0][1]][i.pointlist[0][0]] = [0, 255, 255]
-    # img3[i.pointlist[-1][1]][i.pointlist[-1][0]] = [255, 0, 255]
-    img3[i.all_point_list[0][1]][i.all_point_list[0][0]] = 255
-    img3[i.all_point_list[-1][1]][i.all_point_list[-1][0]] = 255
 
 result = img2 + img3 + img4
 
