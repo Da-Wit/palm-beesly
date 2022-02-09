@@ -83,7 +83,7 @@ def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line
                 x = j
                 y = i
 
-            if img_param[y][x] > min_grayscale < max_grayscale:
+            if min_grayscale < img_param[y][x] < max_grayscale:
                 lines.handle_point([x, y], max_line_distance, unique_num)
                 unique_num += 1
 
@@ -169,7 +169,7 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
 
 
 if __name__ == "__main__":
-    image_path = "C:/Users/think/workspace/palm-beesly/test_img/sample8.4.png"
+    image_path = "C:/Users/think/workspace/palm-beesly/test_img/sample5.4.png"
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
     if img is None:
