@@ -83,7 +83,7 @@ def find_one_orientation_lines(img_param, min_grayscale, max_grayscale, max_line
                 x = j
                 y = i
 
-            if min_grayscale < img_param[y][x] < max_grayscale:
+            if min_grayscale < img_param[y][x]:
                 lines.handle_point([x, y], max_line_distance, unique_num)
                 unique_num += 1
 
@@ -109,7 +109,6 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
     vertical_img = np.zeros((height, width, 1), dtype=np.uint8)
 
     # Finding lines part
-
     horizontal_lines = find_one_orientation_lines(copied, min_grayscale, max_grayscale, max_line_distance,
                                                   is_horizontal=True)
     vertical_lines = find_one_orientation_lines(copied, min_grayscale, max_grayscale, max_line_distance,
@@ -169,7 +168,7 @@ def main(img_param, min_grayscale, max_grayscale, min_line_length, max_line_dist
 
 
 if __name__ == "__main__":
-    image_path = "C:/Users/think/workspace/palm-beesly/test_img/sample5.4.png"
+    image_path = "/Users/david/workspace/palm-beesly/test_img/sample5.4.png"
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
     if img is None:
@@ -197,8 +196,8 @@ if __name__ == "__main__":
 
     cv2.imshow("original", img)
 
-    # cv2.imshow("hori", hori)
-    # cv2.imshow("vert", vert)
+    cv2.imshow("hori", hori)
+    cv2.imshow("vert", vert)
 
     print("Done")
 
