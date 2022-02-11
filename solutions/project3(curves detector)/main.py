@@ -99,53 +99,14 @@ def find_one_orientation_lines(img_param, min_grayscale, max_line_distance, is_h
     return lines
 
 
-def get_bgr_min_max(original_img, lines, vertices):
-    copied = copy.deepcopy(original_img)
-
-    topmost = vertices['topmost']
-    downmost = vertices['downmost']
-    leftmost = vertices['leftmost']
-    rightmost = vertices['rightmost']
-
-    copied = copied[topmost:(downmost + 1), leftmost:(rightmost + 1)]
-
-    b_min, b_max = 256, 0
-    g_min, g_max = 256, 0
-    r_min, r_max = 256, 0
-    for lineOne in lines.line_list:
-        for point in lineOne.all_point_list:
-            b, g, r = copied[point[1]][point[0]]
-            if b < b_min:
-                b_min = b
-            if g < g_min:
-                g_min = g
-            if r < r_min:
-                r_min = r
-
-            if b > b_max:
-                b_max = b
-            if g > g_max:
-                g_max = g
-            if r > r_max:
-                r_max = r
-
-    return [[b_min, b_max], [g_min, g_max], [r_min, r_max]]
-
-
 def init_imgs():
-    original_img_path = "/Users/david/workspace/palm-beesly/test_img/sample5.png"
-    original_img = cv2.imread(original_img_path)
     image_path = "/Users/david/workspace/palm-beesly/test_img/sample5.4.png"
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-
-    if original_img is None:
-        print("Original image is empty!!")
-        exit(1)
 
     if img is None:
         print("Image is empty!!")
         exit(1)
-    return original_img, img
+    return img
 
 
 # 이미지와 값 조정 변수를 넣어주면 최종적으로 시각화된 이미지를 가로, 세로로 나눠 리턴함
@@ -153,10 +114,11 @@ def init_imgs():
 if __name__ == "__main__":
     start = timeit.default_timer()
 
-    original_img, img = init_imgs()
+    img = init_imgs()
     img, vertices = get_roi(img)
+    is_height, is_width = img.shape[:2]
 
-    min_grayscale = 70  # Default value is 63
+    min_grayscale = 50  # Default value is 63
     max_grayscale = 200
     min_line_length = 4  # The minimum number of dots in one line, Default value is 4
     max_line_distance = 5  # Default value is 3
@@ -179,21 +141,9 @@ if __name__ == "__main__":
     grayscale = cv2.cvtColor(rendered_filtered, cv2.COLOR_BGR2GRAY)
     _, thresh = cv2.threshold(grayscale, 1, 255, cv2.THRESH_BINARY)
     thinned = cv2.ximgproc.thinning(thresh)  # to use this function paste it: pip install opencv-contrib-python
-
-    horizontal_lines = find_one_orientation_lines(thinned, min_grayscale, max_line_distance, is_horizontal=True)
-    horizontal_lines.combine(max_distance=4)
-    b_minmax, g_minmax, r_minmax = get_bgr_min_max(original_img, horizontal_lines, vertices)
-    print(b_minmax, g_minmax, r_minmax)
-
-    b_minmax[0] = round(b_minmax[0] * 0.9)
-    b_minmax[1] = round(b_minmax[0] * 1.1)
-    g_minmax[0] = round(g_minmax[0] * 0.9)
-    g_minmax[1] = round(g_minmax[0] * 1.1)
-    r_minmax[0] = round(r_minmax[0] * 0.9)
-    r_minmax[1] = round(r_minmax[0] * 1.1)
+    cv2.imshow("thinned", thinned)
 
     cv2.imshow("original", img)
-    cv2.imshow("thinned", thinned)
 
     stop = timeit.default_timer()
     print(round(stop - start, 6))

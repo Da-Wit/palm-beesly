@@ -3,7 +3,6 @@ import numpy as np
 import random
 import copy
 import cv2
-import os
 
 from solutions import utils
 
@@ -28,6 +27,17 @@ class Lines:
                 index_list.append(idx)
         return index_list
 
+    def combine_only_params(self, indices, new_lineOne):
+        for idx in indices:
+            for i in range(len(self.line_list[idx].all_point_list)):
+                point = self.line_list[idx].all_point_list[i]
+                new_lineOne.add_point(point)
+
+        for index in range(len(indices) - 1, -1, -1):
+            del self.line_list[index]
+
+        self.add_line(new_lineOne)
+
     def handle_point(self, point, max_distance, unique_num):
         list_of_index_of_close_lines = self.get_index_list_of_close_lines(point, max_distance)
         number_of_close_lines = len(list_of_index_of_close_lines)
@@ -50,34 +60,36 @@ class Lines:
         # 점 주변에 선이 1개보다 많을 때
         # 기울기로 구함
         else:
-            filtered_lines = []
-
-            for index_of_line in list_of_index_of_close_lines:
-                lineOne = self.line_list[index_of_line]
-
-                if len(lineOne.all_point_list) < self.number_of_front_points_to_find_slope:
-                    continue
-                elif lineOne.have_own_slope() is False or lineOne.changed_after_calculating_slope is True:
-                    lineOne.calculate_own_slope()
-                    lineOne.changed_after_calculating_slope = False
-
-                slope_related_to_xy = lineOne.avg_slope_with(point)
-                line_own_slope = lineOne.own_slope
-                gap = abs(slope_related_to_xy - line_own_slope)
-                filtered_lines.append({"index": index_of_line, "gap": gap})
-
-            # TODO 랜덤이 아닌 합리적인 방법으로 추가할 선 선택하기
-            # 모든 선이 기울기를 구할 수 없을 때
-            # 무작위 선 하나에 점을 추가
-            if len(filtered_lines) == 0:
-                random_index = random.randint(0, number_of_close_lines - 1)
-                self.line_list[list_of_index_of_close_lines[random_index]].add_point(point)
-
-            else:
-                min_gap_line = min(filtered_lines, key=lambda line: line['gap'])
-                index = min_gap_line['index']
-
-                self.line_list[index].add_point(point)
+            new_lineOne = LineOne(self.number_of_front_points_to_find_slope, unique_num)
+            self.combine_only_params(list_of_index_of_close_lines, new_lineOne)
+            # filtered_lines = []
+            #
+            # for index_of_line in list_of_index_of_close_lines:
+            #     lineOne = self.line_list[index_of_line]
+            #
+            #     if len(lineOne.all_point_list) < self.number_of_front_points_to_find_slope:
+            #         continue
+            #     elif lineOne.have_own_slope() is False or lineOne.changed_after_calculating_slope is True:
+            #         lineOne.calculate_own_slope()
+            #         lineOne.changed_after_calculating_slope = False
+            #
+            #     slope_related_to_xy = lineOne.avg_slope_with(point)
+            #     line_own_slope = lineOne.own_slope
+            #     gap = abs(slope_related_to_xy - line_own_slope)
+            #     filtered_lines.append({"index": index_of_line, "gap": gap})
+            #
+            # # TODO 랜덤이 아닌 합리적인 방법으로 추가할 선 선택하기
+            # # 모든 선이 기울기를 구할 수 없을 때
+            # # 무작위 선 하나에 점을 추가
+            # if len(filtered_lines) == 0:
+            #     random_index = random.randint(0, number_of_close_lines - 1)
+            #     self.line_list[list_of_index_of_close_lines[random_index]].add_point(point)
+            #
+            # else:
+            #     min_gap_line = min(filtered_lines, key=lambda line: line['gap'])
+            #     index = min_gap_line['index']
+            #
+            #     self.line_list[index].add_point(point)
 
     def filter_by_line_length(self, min_length):
         self.line_list = [
@@ -129,11 +141,6 @@ class Lines:
             return None
         self.sort()
         self.line_list = self.line_list[:number_of_lines_to_leave]
-
-    def flatten(self, max_distance, is_horizontal):
-        for i in range(len(self.line_list)):
-            min_val, max_val = self.line_list[i].get_min_max_of_x_or_y(is_horizontal)
-            self.line_list[i].flatten(max_distance, min_val, max_val, is_horizontal)
 
     def is_connectable(self, lineOne1, lineOne2, max_distance):
         for point1 in lineOne1.all_point_list:

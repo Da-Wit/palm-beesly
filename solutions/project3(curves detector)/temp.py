@@ -1,91 +1,155 @@
+import cv2 as cv
 import copy
+from lines import Lines
+import timeit
+import numpy as np
 
 
-def get_min_max_of_x_or_y(all_point_list, is_horizontal):
+def get_roi(img, min_grayscale=0):
+    copied = copy.deepcopy(img)
+    height, width = copied.shape[:2]
+
+    topmost = 0
+    downmost = height - 1
+    leftmost = 0
+    rightmost = width - 1
+
+    done = False
+
+    for x in range(width):
+        if done is True:
+            break
+        for y in range(height):
+            if copied[y][x] > min_grayscale:
+                leftmost = x
+                done = True
+
+    done = False
+
+    for y in range(height):
+        if done is True:
+            break
+        for x in range(width):
+            if copied[y][x] > min_grayscale:
+                topmost = y
+                done = True
+
+    done = False
+
+    for y in range(height - 1, -1, -1):
+        if done is True:
+            break
+        for x in range(width):
+            if copied[y][x] > min_grayscale:
+                downmost = y
+                done = True
+
+    done = False
+
+    for x in range(width - 1, -1, -1):
+        if done is True:
+            break
+        for y in range(height):
+            if copied[y][x] > min_grayscale:
+                rightmost = x
+                done = True
+
+    return copied[topmost:(downmost + 1), leftmost:(rightmost + 1)], {'topmost': topmost, 'downmost': downmost,
+                                                                      'leftmost': leftmost, 'rightmost': rightmost}
+
+
+def adaptive_threshold(img):
+    thr = cv.adaptiveThreshold(img, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 0)
+
+
+# 한 방향으로의 hline들의 리스트, nline을 리턴함
+def find_one_orientation_lines(img_param, max_line_distance, is_horizontal):
+    height, width = img_param.shape[:2]
+
     if is_horizontal:
-        index = 0  # index of x
+        first_for_loop_max = width
+        second_for_loop_max = height
     else:
-        index = 1  # index of y
+        first_for_loop_max = height
+        second_for_loop_max = width
 
-    max_val = max(all_point_list, key=lambda point: point[index])[index]
-    min_val = min(all_point_list, key=lambda point: point[index])[index]
+    lines = Lines()
+    unique_num = 0
+    for i in range(first_for_loop_max):
+        for j in range(second_for_loop_max):
+            if is_horizontal:
+                x = i
+                y = j
+            else:
+                x = j
+                y = i
 
-    return min_val, max_val
+            if img_param[y][x] == 255:
+                lines.handle_point([x, y], max_line_distance, unique_num)
+                unique_num += 1
 
-
-def separate(filtered, max_distance, index):
-    copied = copy.deepcopy(filtered)
-    separated = []
-    temp = []
-    # TODO 변수 index, idx, filtered, max_distance 이름 다시 짓기
-    # 불명확하고, max_distance는 main의 동명의 변수와 겹침
-
-    idx = abs(index - 1)
-
-    for i in copied:
-        if len(temp) == 0:
-            temp.append(i)
-        elif abs(temp[-1][idx] - i[idx]) <= max_distance:
-            temp.append(i)
-        else:
-            separated.append(temp)
-            temp = [i]
-    if len(temp) > 0:
-        separated.append(temp)
-    return separated
-
-
-def flatten_on_one_x_or_y(filtered, index):
-    idx = abs(index - 1)
-    sum_val = 0
-    for i in filtered:
-        sum_val += i[idx]
-    avg = round(sum_val / len(filtered))
-    result = [0, 0]
-    result[index] = filtered[0][index]
-    result[idx] = avg
-
-    return [result]
-
-
-# TODO max_distance를  실행 시 두 줄이 한 줄로 나타나는
-def flatten(all_point_list, max_distance, min_val, max_val, is_horizontal):
-    flattened = []
-
-    for i in range(min_val, max_val + 1):
         if is_horizontal:
-            index = 0  # index of x
+            x = i
+            y = 0
         else:
-            index = 1  # index of y
+            x = 0
+            y = i
+        lines.renew_work_area([x, y], max_line_distance, is_horizontal)
 
-        flattened_on_one_x_or_y = list(filter(lambda point: point[index] == i, all_point_list))
-
-        if len(flattened_on_one_x_or_y) == 0:
-            continue
-        elif len(flattened_on_one_x_or_y) == 1:
-            flattened = flattened + flattened_on_one_x_or_y
-        else:
-            a = [[176, 210], [176, 222], [176, 223], [176, 224]]
-            b = separate(flattened_on_one_x_or_y, 0, 0)
-            c = separate(flattened_on_one_x_or_y, 1, 0)
-            d = separate(flattened_on_one_x_or_y, 11, 0)
-            e = separate(flattened_on_one_x_or_y, 12, 0)
-            f = separate(flattened_on_one_x_or_y, 13, 0)
-
-            separated = separate(flattened_on_one_x_or_y, max_distance, index)
-            # if len(separated) > 1:
-            for i in separated:
-                flattened += flatten_on_one_x_or_y(i, index)
+    return lines
 
 
-a = [[176, 210], [176, 222], [176, 223], [176, 224]]
-b = separate(a, 0, 0)
-c = separate(a, 1, 0)
-d = separate(a, 11, 0)
-e = separate(a, 12, 0)
-f = separate(a, 13, 0)
-print("b", b)
-print("c", c)
-print("d", d)
-print("e", e)
-print("f", f)
+def init_imgs():
+    image_path = "/Users/david/workspace/palm-beesly/test_img/sample5.4.png"
+    img = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
+
+    if img is None:
+        print("Image is empty!!")
+        exit(1)
+    return img
+
+
+start = timeit.default_timer()
+
+img_path = "/Users/david/workspace/palm-beesly/test_img/sample5.4.png"
+img = cv.imread(img_path)
+
+grayscale = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+
+img, vertices = get_roi(grayscale)
+
+thr = cv.adaptiveThreshold(img, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 0)
+cv.imshow("adaptiveThreshold", thr)
+
+min_line_length = 4  # The minimum number of dots in one line, Default value is 4
+max_line_distance = 5  # Default value is 3
+number_of_lines_to_leave = 10  # Default value is 10
+
+height, width = img.shape[:2]
+horizontal_img = np.zeros((height, width, 1), dtype=np.uint8)
+
+horizontal_lines = find_one_orientation_lines(thr, max_line_distance, is_horizontal=True)
+rendered_lines = horizontal_lines.visualize_lines(thr, color=True)
+cv.imshow("just found", rendered_lines)
+
+horizontal_lines.combine(max_distance=1)
+combined = horizontal_lines.visualize_lines(rendered_lines, color=True)
+cv.imshow("combined", combined)
+
+horizontal_lines.filter_by_line_length(min_line_length)
+horizontal_lines.leave_long_lines(number_of_lines_to_leave)
+filtered = horizontal_lines.visualize_lines(combined, color=True)
+cv.imshow("filtered", filtered)
+
+grayscale = cv.cvtColor(filtered, cv.COLOR_BGR2GRAY)
+_, thresh = cv.threshold(grayscale, 1, 255, cv.THRESH_BINARY)
+thinned = cv.ximgproc.thinning(thresh)  # to use this function paste it: pip install opencv-contrib-python
+cv.imshow("thinned", thinned)
+
+cv.imshow("original", img)
+
+stop = timeit.default_timer()
+print(round(stop - start, 6))
+print("Done")
+
+cv.waitKey(0)
