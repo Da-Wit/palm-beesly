@@ -13,9 +13,9 @@ class LineOne:
         self.unique_num = unique_num
         # color는 디버깅 용으로 hline별로 쉽게 구별하기 위해 넣은 변수임
         # TODO 실제 개발 완료 시 color 멤버 변수 제거하기
-        random_B = random.randint(0, 255)
-        random_G = random.randint(0, 255)
-        random_R = random.randint(0, 255)
+        random_B = random.randint(1, 255)
+        random_G = random.randint(1, 255)
+        random_R = random.randint(1, 255)
 
         self.color = [random_B, random_G, random_R]
 
