@@ -1,6 +1,5 @@
 from lineone import LineOne
 import numpy as np
-import random
 import copy
 import cv2
 
@@ -27,14 +26,15 @@ class Lines:
                 index_list.append(idx)
         return index_list
 
+    # TODO change function name
     def combine_only_params(self, indices, new_lineOne):
         for idx in indices:
-            for i in range(len(self.line_list[idx].all_point_list)):
-                point = self.line_list[idx].all_point_list[i]
-                new_lineOne.add_point(point)
+            lineOne = self.line_list[idx]
+            point_list = copy.deepcopy(lineOne.all_point_list)
+            new_lineOne.all_point_list += point_list
 
         for index in range(len(indices) - 1, -1, -1):
-            del self.line_list[index]
+            del self.line_list[indices[index]]
 
         self.add_line(new_lineOne)
 
@@ -58,68 +58,27 @@ class Lines:
             lineOne.add_point(point)
 
         # 점 주변에 선이 1개보다 많을 때
-        # 기울기로 구함
         else:
             new_lineOne = LineOne(self.number_of_front_points_to_find_slope, unique_num)
             self.combine_only_params(list_of_index_of_close_lines, new_lineOne)
-            # filtered_lines = []
-            #
-            # for index_of_line in list_of_index_of_close_lines:
-            #     lineOne = self.line_list[index_of_line]
-            #
-            #     if len(lineOne.all_point_list) < self.number_of_front_points_to_find_slope:
-            #         continue
-            #     elif lineOne.have_own_slope() is False or lineOne.changed_after_calculating_slope is True:
-            #         lineOne.calculate_own_slope()
-            #         lineOne.changed_after_calculating_slope = False
-            #
-            #     slope_related_to_xy = lineOne.avg_slope_with(point)
-            #     line_own_slope = lineOne.own_slope
-            #     gap = abs(slope_related_to_xy - line_own_slope)
-            #     filtered_lines.append({"index": index_of_line, "gap": gap})
-            #
-            # # TODO 랜덤이 아닌 합리적인 방법으로 추가할 선 선택하기
-            # # 모든 선이 기울기를 구할 수 없을 때
-            # # 무작위 선 하나에 점을 추가
-            # if len(filtered_lines) == 0:
-            #     random_index = random.randint(0, number_of_close_lines - 1)
-            #     self.line_list[list_of_index_of_close_lines[random_index]].add_point(point)
-            #
-            # else:
-            #     min_gap_line = min(filtered_lines, key=lambda line: line['gap'])
-            #     index = min_gap_line['index']
-            #
-            #     self.line_list[index].add_point(point)
 
     def filter_by_line_length(self, min_length):
-        self.line_list = [
-            lineOne \
-            for lineOne in self.line_list \
-            if len(lineOne.all_point_list) >= min_length
-        ]
+        self.line_list = []
+        for lineOne in self.line_list:
+            if len(lineOne.all_point_list) >= min_length:
+                self.line_list.append(lineOne)
 
-    def visualize_lines(self, img_param, color=False):
-        copied_img = copy.deepcopy(img_param)
-        height, width = copied_img.shape[:2]
+    def visualize_lines(self, height, width):
         copied_img = np.zeros((height, width, 1), dtype=np.uint8)
 
-        if color:
-            copied_img = cv2.cvtColor(copied_img, cv2.COLOR_GRAY2BGR)
-            temp = np.zeros((height, width, 3), dtype=np.uint8)
-        else:
-            temp = np.zeros((height, width, 1), dtype=np.uint8)
+        copied_img = cv2.cvtColor(copied_img, cv2.COLOR_GRAY2BGR)
+        temp = np.zeros((height, width, 3), dtype=np.uint8)
 
         for lineOne in self.line_list:
             temp = temp * 0
             for point in lineOne.all_point_list:
-
-                x = point[0]
-                y = point[1]
-
-                if color:
-                    temp[y][x] = lineOne.color
-                else:
-                    temp[y][x] = 255
+                x, y = point
+                temp[y][x] = lineOne.color
 
             copied_img = copied_img + temp
 
@@ -227,3 +186,7 @@ class Lines:
         pre_combined = self.pre_combine(max_distance)
         absolutely_combined = self.combine_absolutely(pre_combined)
         self.line_list = absolutely_combined
+
+    def imshow(self, title, height, width):
+        img = self.visualize_lines(height, width)
+        cv2.imshow(title, img)

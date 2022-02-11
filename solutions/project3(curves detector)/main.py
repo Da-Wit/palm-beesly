@@ -1,14 +1,11 @@
 import cv2
+import cv2 as cv
 import copy
 from lines import Lines
-import numpy as np
 import timeit
+import numpy as np
 
 
-# 인풋으로 받은 캐니처리만 된 이미지에서 좌, 우, 위, 아래로 grayscle값이
-# min_grayscle 매개변수보다 큰 부분부터 잘라낸 이미지를 리턴함
-# 즉, 쓸데없는 빈 공간을 제거해서 연산을 줄임
-# TODO raw input image 가지고 ROI를 구하도록 바꾸기
 def get_roi(img, min_grayscale=0):
     copied = copy.deepcopy(img)
     height, width = copied.shape[:2]
@@ -62,8 +59,13 @@ def get_roi(img, min_grayscale=0):
                                                                       'leftmost': leftmost, 'rightmost': rightmost}
 
 
+def adaptive_threshold(img):
+    result = cv.adaptiveThreshold(img, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 0)
+    return result
+
+
 # 한 방향으로의 hline들의 리스트, nline을 리턴함
-def find_one_orientation_lines(img_param, min_grayscale, max_line_distance, is_horizontal):
+def find_one_orientation_lines(img_param, max_line_distance, is_horizontal):
     height, width = img_param.shape[:2]
 
     if is_horizontal:
@@ -84,10 +86,9 @@ def find_one_orientation_lines(img_param, min_grayscale, max_line_distance, is_h
                 x = j
                 y = i
 
-            if min_grayscale < img_param[y][x]:
+            if img_param[y][x] == 255:
                 lines.handle_point([x, y], max_line_distance, unique_num)
                 unique_num += 1
-
         if is_horizontal:
             x = i
             y = 0
@@ -100,8 +101,8 @@ def find_one_orientation_lines(img_param, min_grayscale, max_line_distance, is_h
 
 
 def init_imgs():
-    image_path = "/Users/david/workspace/palm-beesly/test_img/sample5.4.png"
-    img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    image_path = "/Users/david/workspace/palm-beesly/test_img/sample1.4.png"
+    img = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
 
     if img is None:
         print("Image is empty!!")
@@ -109,44 +110,54 @@ def init_imgs():
     return img
 
 
-# 이미지와 값 조정 변수를 넣어주면 최종적으로 시각화된 이미지를 가로, 세로로 나눠 리턴함
-# 외부에서 최종적으로 사용할 함수
+def get_thinned(bgr_img):
+    gray = cv.cvtColor(bgr_img, cv.COLOR_BGR2GRAY)
+    _, thresh = cv.threshold(gray, 1, 255, cv.THRESH_BINARY)
+    result = cv.ximgproc.thinning(thresh)  # to use this function paste it: pip install opencv-contrib-python
+    return result
+
+
 if __name__ == "__main__":
-    start = timeit.default_timer()
+    grayed = init_imgs()
+    img, vertices = get_roi(grayed)
 
-    img = init_imgs()
-    img, vertices = get_roi(img)
-    is_height, is_width = img.shape[:2]
+    thr = adaptive_threshold(img)
+    cv.imshow("adaptiveThreshold", thr)
 
-    min_grayscale = 50  # Default value is 63
-    max_grayscale = 200
-    min_line_length = 4  # The minimum number of dots in one line, Default value is 4
     max_line_distance = 5  # Default value is 3
+    min_line_length = 4  # The minimum number of dots in one line, Default value is 4
     number_of_lines_to_leave = 10  # Default value is 10
-    flattening_distance = 4  # Default value is 4
 
-    height, width = img.shape[:2]
+    height, width = thr.shape[:2]
     horizontal_img = np.zeros((height, width, 1), dtype=np.uint8)
 
-    horizontal_lines = find_one_orientation_lines(img, min_grayscale, max_line_distance, is_horizontal=True)
-    rendered_lines = horizontal_lines.visualize_lines(horizontal_img, color=True)
-    cv2.imshow("before combining", rendered_lines)
-
-    horizontal_lines.combine(max_distance=4)
-    horizontal_lines.filter_by_line_length(min_line_length)
-    horizontal_lines.leave_long_lines(number_of_lines_to_leave)
-    rendered_filtered = horizontal_lines.visualize_lines(rendered_lines, color=True)
-    cv2.imshow("after combining", rendered_filtered)
-
-    grayscale = cv2.cvtColor(rendered_filtered, cv2.COLOR_BGR2GRAY)
-    _, thresh = cv2.threshold(grayscale, 1, 255, cv2.THRESH_BINARY)
-    thinned = cv2.ximgproc.thinning(thresh)  # to use this function paste it: pip install opencv-contrib-python
-    cv2.imshow("thinned", thinned)
-
-    cv2.imshow("original", img)
-
+    start = timeit.default_timer()
+    lines = find_one_orientation_lines(thr, max_line_distance, is_horizontal=True)
+    lines.imshow("just found", height, width)
     stop = timeit.default_timer()
-    print(round(stop - start, 6))
+    print("Finding part", round(stop - start, 6))
+
+    start = timeit.default_timer()
+    lines.combine(max_distance=1)
+    lines.imshow("combined", height, width)
+    stop = timeit.default_timer()
+    print("combining part", round(stop - start, 6))
+
+    start = timeit.default_timer()
+    lines.filter_by_line_length(min_line_length)
+    lines.leave_long_lines(number_of_lines_to_leave)
+    filtered = lines.visualize_lines(height, width)
+    cv.imshow("filtered", filtered)
+    stop = timeit.default_timer()
+    print("Filtering part", round(stop - start, 6))
+
+    start = timeit.default_timer()
+    thinned = get_thinned(filtered)
+    cv.imshow("thinned", thinned)
+    stop = timeit.default_timer()
+    print("Thinning part", round(stop - start, 6))
+
+    cv.imshow("original", img)
     print("Done")
 
-    cv2.waitKey(0)
+    cv.waitKey(0)
