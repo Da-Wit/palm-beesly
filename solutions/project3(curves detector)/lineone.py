@@ -1,5 +1,5 @@
-import copy
-import solutions.utils as utils
+from solutions.utils import get_slope
+from solutions.utils import distance_between
 import random
 
 
@@ -31,7 +31,7 @@ class LineOne:
     def is_continuable(self, external_point, max_distance=3):
         for idx in range(len(self.point_list_in_work_area)):
             current_point = self.point_list_in_work_area[idx]
-            if utils.distance_between(current_point, external_point) < max_distance:
+            if distance_between(current_point, external_point) < max_distance:
                 return True
 
         return False
@@ -51,8 +51,7 @@ class LineOne:
             front_point = point_list[idx]
             back_point = point_list[idx + half]
 
-            sum_gradient = sum_gradient + \
-                           utils.get_slope(front_point, back_point)
+            sum_gradient = sum_gradient + get_slope(front_point, back_point)
 
         avg_gradient = sum_gradient / half
         self.own_slope = avg_gradient
@@ -60,8 +59,7 @@ class LineOne:
     def avg_slope_with(self, point):
         sum_gradient = 0
         for i in range(self.number_of_front_points_to_find_slope):
-            sum_gradient = sum_gradient + \
-                           utils.get_slope(point, self.all_point_list[-i])
+            sum_gradient = sum_gradient + get_slope(point, self.all_point_list[-i])
         avg_gradient = sum_gradient / self.number_of_front_points_to_find_slope
 
         return avg_gradient
@@ -79,68 +77,3 @@ class LineOne:
             if gap >= max_distance:
                 del self.point_list_in_work_area[real_idx]
                 number_of_deleted_point += 1
-
-    def get_min_max_of_x_or_y(self, is_horizontal):
-        if is_horizontal:
-            index = 0  # index of x
-        else:
-            index = 1  # index of y
-
-        max_val = max(self.all_point_list, key=lambda point: point[index])[index]
-        min_val = min(self.all_point_list, key=lambda point: point[index])[index]
-
-        return min_val, max_val
-
-    def separate(self, filtered, flattening_distance, index):
-        copied = copy.deepcopy(filtered)
-        separated = []
-        temp = []
-        # TODO 변수 index, idx, filtered 이름 다시 짓기
-        # 변수명이 not specific, not detail하다.
-
-        idx = abs(index - 1)
-        for i in copied:
-            if len(temp) == 0:
-                temp.append(i)
-            elif abs(temp[-1][idx] - i[idx]) <= flattening_distance:
-                temp.append(i)
-            else:
-                separated.append(temp)
-                temp = [i]
-        if len(temp) > 0:
-            separated.append(temp)
-        return separated
-
-    def flatten_on_one_x_or_y(self, filtered, index):
-        idx = abs(index - 1)
-        sum_val = 0
-        for i in filtered:
-            sum_val += i[idx]
-        avg = round(sum_val / len(filtered))
-        result = [0, 0]
-        result[index] = filtered[0][index]
-        result[idx] = avg
-
-        return [result]
-
-    def flatten(self, flattening_distance, min_val, max_val, is_horizontal):
-        flattened = []
-
-        for i in range(min_val, max_val + 1):
-            if is_horizontal:
-                index = 0  # index of x
-            else:
-                index = 1  # index of y
-
-            flattened_on_one_x_or_y = list(filter(lambda point: point[index] == i, self.all_point_list))
-
-            if len(flattened_on_one_x_or_y) == 0:
-                continue
-            elif len(flattened_on_one_x_or_y) == 1:
-                flattened = flattened + flattened_on_one_x_or_y
-            else:
-                separated = self.separate(flattened_on_one_x_or_y, flattening_distance, index)
-                for i in separated:
-                    flattened += self.flatten_on_one_x_or_y(i, index)
-
-        self.all_point_list = flattened
