@@ -1,13 +1,12 @@
-import cv2
 import cv2 as cv
-import copy
+import copy as cp
 from lines import Lines
 import timeit
 import numpy as np
 
 
 def get_roi(img_param, min_grayscale=0):
-    copied = copy.deepcopy(img_param)
+    copied = img_param.copy()
     height, width = copied.shape[:2]
 
     topmost = 0
@@ -115,10 +114,10 @@ def find_one_orientation_lines_with_debugging(img_param, max_line_distance, is_h
                     lines.handle_point([x, y], max_line_distance, unique_num, is_horizontal, debug=True,
                                        img_for_debugging=img_for_debugging)
                     unique_num += 1
-                prev_bgr = copy.deepcopy(img_for_debugging[y][x])
+                prev_bgr = cp.deepcopy(img_for_debugging[y][x])
                 img_for_debugging[y][x] = [0, 0, 255]
                 cv.imshow("debugging", img_for_debugging)
-                k = cv2.waitKey(0)
+                k = cv.waitKey(0)
                 # for문 도중 Esc를 누르면 프로그램이 종료되게 함
                 if k == 113:  # q key to stop
                     exit(0)
@@ -179,7 +178,7 @@ def find_one_orientation_lines(img_param, max_line_distance, is_horizontal):
 
 
 def init_imgs():
-    image_path = "/Users/david/workspace/palm-beesly/test_img/sample5.4.png"
+    image_path = "/Users/david/workspace/palm-beesly/test_img/sample7.4.png"
     image = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
 
     if image is None:
@@ -203,7 +202,7 @@ if __name__ == "__main__":
     cv.imshow("original", img)
     cv.imshow("adaptiveThreshold", thr)
 
-    max_line_distance = 2  # Default value is 3
+    max_line_distance = 1.3  # Default value is 3
     combining_distance = 1
     min_line_length = 100  # The minimum number of dots in one line, Default value is 4
     number_of_lines_to_leave = 6  # Default value is 10

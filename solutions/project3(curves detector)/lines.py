@@ -81,7 +81,6 @@ class Lines:
 
     def visualize_lines(self, height, width):
         copied_img = np.zeros((height, width, 1), dtype=np.uint8)
-
         copied_img = cv2.cvtColor(copied_img, cv2.COLOR_GRAY2BGR)
         temp = np.zeros((height, width, 3), dtype=np.uint8)
 

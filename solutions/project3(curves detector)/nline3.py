@@ -8,9 +8,9 @@ import solutions.utils as utils
 image_path = "/test_img/edit6.png"
 img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
-img2 = copy.deepcopy(img)
-img3 = copy.deepcopy(img)
-img4 = copy.deepcopy(img)
+img2 = img.copy()
+img3 = img
+img4 = img
 
 h, w = img.shape[:2]
 nline = []  # 가로 선 나올때마다 추가됨
@@ -94,7 +94,7 @@ def merge_same_index_nlines(unnamed_list):
 
 
 def get_img4(nline3, img_for_measurement):
-    dst = copy.deepcopy(img_for_measurement) * 0
+    dst = img_for_measurement.copy() * 0
     for index in range(len(nline3)):
         for x, y in nline3[index]:
             dst[y][x] = 255

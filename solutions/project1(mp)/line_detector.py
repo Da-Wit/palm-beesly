@@ -11,10 +11,9 @@ number_of_sample_images = 44
 
 # 이미지 샘플 개수만큼 for문을 돈다
 for i in range(number_of_sample_images):
-    image_path = f"C:/Users/think/workspace/palm-beesly/test_img/sample{3}.png"
+    image_path = f"/Users/david/workspace/palm-beesly/test_img/sample{3}.png"
     # image_path = f"C:/Users/think/workspace/palm-beesly/test_img/sample{25}.png"
     image = cv2.imread(image_path)
-
     # 이미지가 제대로 불러와지지 않으면 에러 출력하고 다음 숫자로 넘어감
     if image is None:
         print(f"test_img/sample{i}.png is empty!!")
