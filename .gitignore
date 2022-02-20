@@ -114,6 +114,7 @@ celerybeat.pid
 .venv
 env/
 venv/
+mp_env/
 ENV/
 env.bak/
 venv.bak/
@@ -317,3 +318,5 @@ fabric.properties
 
 
 # My Own
+src/temp.py
+sample_img/
