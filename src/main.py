@@ -1,9 +1,19 @@
 import cv2 as cv
-import copy as cp
 from lines import Lines
-import timeit
-import numpy as np
+from timeit import default_timer as timer
+from copy import deepcopy as cp
 import utils
+import numpy as np
+import platform
+
+# My Specifications
+print(f"platform.platform() : {platform.platform()}")  # macOS-12.2.1-x86_64-i386-64bit
+print(f"platform.release() : {platform.release()}")  # 21.3.0
+print(
+    f"platform.version() : {platform.version()}")  # Darwin Kernel Version 21.3.0: Wed Jan  5 21:37:58 PST 2022; root:xnu-8019.80.24~20/RELEASE_ARM64_T8101
+print(f"python version : {platform.python_version()}")  # 3.8.12
+print(f"opencv version : {cv.__version__}")  # 4.5.5
+print(f"numpy version : {np.__version__}")  # 1.22.2
 
 
 def get_roi(img_param, min_grayscale=0):
@@ -174,7 +184,7 @@ def find_one_orientation_lines(img_param, max_line_distance, is_horizontal):
 
 
 def init_imgs():
-    image_path = "/Users/david/workspace/palm-beesly/test_img/sample7.4.png"
+    image_path = "/Users/david/workspace/palm-beesly/sample_img/sample7.4.png"
     image = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
 
     if image is None:
@@ -205,21 +215,21 @@ if __name__ == "__main__":
 
     height, width = thr.shape[:2]
 
-    start = timeit.default_timer()
+    start = timer()
     # lines = find_one_orientation_lines_with_debugging(thr, max_line_distance, is_horizontal=False)
     lines = find_one_orientation_lines(thr, max_line_distance, is_horizontal=False)
     lines.imshow("just found", height, width)
-    stop = timeit.default_timer()
+    stop = timer()
     print("Finding part", round(stop - start, 6))
 
-    start = timeit.default_timer()
+    start = timer()
     # lines.filter_by_line_length(min_line_length)
     lines.sort()
     del lines.line_list[0]
     lines.leave_long_lines(number_of_lines_to_leave)
     filtered = lines.visualize_lines(height, width)
     cv.imshow("filtered", filtered)
-    stop = timeit.default_timer()
+    stop = timer()
     print("Filtering part", round(stop - start, 6))
 
     # start = timeit.default_timer()

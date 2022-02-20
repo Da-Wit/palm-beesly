@@ -143,6 +143,37 @@ def get_hand_form(image, mp_hands):
         return results.multi_hand_landmarks[0].landmark
 
 
+def get_part_of_contour(contour, coord1, coord2):
+    # make iterable coords tuple to execute for loop
+    coords = (coord1, coord2)
+    indices_of_coords = np.zeros((2, 3), dtype=np.int32)
+
+    for index in range(len(coords)):
+        coord = coords[index]
+
+        # indices having same value with coord
+        ihsvwc = np.asarray(np.where(contour == coord)).T
+        for i in ihsvwc:
+            if coord[0] == contour[i[0]][i[1]][0] and coord[1] == contour[i[0]][i[1]][1]:
+                indices_of_coords[index] = i
+
+    if indices_of_coords[0][0] < indices_of_coords[1][0]:
+        smaller_index = indices_of_coords[0][0]
+        bigger_index = indices_of_coords[1][0]
+        is_coord1_idx_bigger = False
+    else:
+        smaller_index = indices_of_coords[1][0]
+        bigger_index = indices_of_coords[0][0]
+        is_coord1_idx_bigger = True
+
+    part_of_contour = contour[smaller_index:bigger_index + 1]
+
+    if is_coord1_idx_bigger is False:
+        part_of_contour = np.flipud(part_of_contour)
+
+    return part_of_contour
+
+
 def get_palm(image):
     img = image.copy()
     landmark = get_hand_form(img, mp_hands)
@@ -170,7 +201,7 @@ def get_palm(image):
 
     # sonnal[0]이 손날 위쪽(새끼손까락쪽),
     # sonnal[len(sonnal)-1]이 손날 아래쪽(손목쪽)
-    sonnal = utils.get_part_of_contour(img, cnt, sonnal_top, sonnal_bottom)
+    sonnal = get_part_of_contour(img, cnt, sonnal_top, sonnal_bottom)
 
     coords = np.array([[pinky], [ring], [middle], [index], [thumb_top], [thumb_mid], [thumb_bottom]])
 

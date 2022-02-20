@@ -3,15 +3,14 @@ import math
 import numpy as np
 
 
-# 이미지의 비율을 유지하며 높이, 너비 중 하나를 인수로 받아,
-# 적절하게 이미지 크기를 조절하는 함수입니다.
-
 def zoom(img_param, zoom_factor=None):
     if zoom_factor is None:
         return img_param
     return cv.resize(img_param, None, fx=zoom_factor, fy=zoom_factor)
 
 
+# 이미지의 비율을 유지하며 높이, 너비 중 하나를 인수로 받아,
+# 적절하게 이미지 크기를 조절하는 함수
 def resize(image, width=None, height=None, inter=cv.INTER_AREA):
     (h, w) = image.shape[:2]
 
@@ -32,8 +31,6 @@ def distance_between(coord1, coord2):
 
 # 두 좌표를 인수로 받아서 그 두 좌표를 지나는 선의 기울기를 구하는 함수
 # 기울기를 구하는  분모가 0이 될 수 있어서, 분모에 1e-9(적당히 작은 값)를 더했다.
-
-
 def get_slope(coord1, coord2):
     return (coord1[1] - coord2[1]) / ((coord1[0] - coord2[0]) + 10 ** (-9))
 
@@ -84,23 +81,6 @@ def remove_bground(image):
     return cv.bitwise_and(image, image, mask=mask)
 
 
-# mediapipe 라이브러리를 써서 손에 있는
-# 특정 부위들의 좌표값을 반환하는 함수
-# mediapipe 라이브버리 예제는 다음 링크 참고!
-# https://google.github.io/mediapipe/solutions/hands.html
-def get_hand_form(image, mp_hands):
-    with mp_hands.Hands(
-            static_image_mode=True,
-            max_num_hands=1,
-            min_detection_confidence=0.5) as hands:
-        # Convert the BGR image to RGB before processing.
-        results = hands.process(cv.cvtColor(image, cv.COLOR_BGR2RGB))
-
-        if not results.multi_hand_landmarks:
-            return None
-        return results.multi_hand_landmarks[0].landmark
-
-
 def get_contour(image):
     ret, thresh = cv.threshold(image, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
 
@@ -109,38 +89,7 @@ def get_contour(image):
     return get_max_contour(contours)
 
 
-def get_part_of_contour(contour, coord1, coord2):
-    # make iterable coords tuple to execute for loop
-    coords = (coord1, coord2)
-    indices_of_coords = np.zeros((2, 3), dtype=np.int32)
-
-    for index in range(len(coords)):
-        coord = coords[index]
-
-        # indices having same value with coord
-        ihsvwc = np.asarray(np.where(contour == coord)).T
-        for i in ihsvwc:
-            if coord[0] == contour[i[0]][i[1]][0] and coord[1] == contour[i[0]][i[1]][1]:
-                indices_of_coords[index] = i
-
-    if indices_of_coords[0][0] < indices_of_coords[1][0]:
-        smaller_index = indices_of_coords[0][0]
-        bigger_index = indices_of_coords[1][0]
-        is_coord1_idx_bigger = False
-    else:
-        smaller_index = indices_of_coords[1][0]
-        bigger_index = indices_of_coords[0][0]
-        is_coord1_idx_bigger = True
-
-    part_of_contour = contour[smaller_index:bigger_index + 1]
-
-    if is_coord1_idx_bigger is False:
-        part_of_contour = np.flipud(part_of_contour)
-
-    return part_of_contour
-
-
-def center(points):
+def get_center_of_mass(points):
     M = cv.moments(points)
     cX = int(M['m10'] / M['m00'])
     cY = int(M['m01'] / M['m00'])
@@ -164,8 +113,8 @@ def getAngle(start, end):
 
 def rotateAndScale(img, scaleFactor=0.5, degreesCCW=30):
     # note: numpy uses (y,x) convention but most OpenCV functions use (x,y)
-    (oldY, oldX) = img.shape
-    # rotate about center of image.
+    (oldY, oldX) = img.shape[:2]
+    # rotate by center of image.
     M = cv.getRotationMatrix2D(
         center=(oldX / 2, oldY / 2), angle=degreesCCW, scale=scaleFactor)
 
@@ -207,14 +156,21 @@ def rotate_point(point, pivot, degree):
     x0, y0 = pivot
     x2 = round(((x1 - x0) * math.cos(deg)) - ((y1 - y0) * math.sin(deg)) + x0)
     y2 = round(((x1 - x0) * math.sin(deg)) + ((y1 - y0) * math.cos(deg)) + y0)
-    return (x2, y2)
+    return x2, y2
 
 
-def find_index(list_param, condition_funct):
+def find_index(list_param, condition_funct, multiple=False):
+    result = []
     for index in range(len(list_param)):
         if condition_funct(index, list_param[index]) is True:
-            return index
-    return None
+            if multiple is True:
+                result.append(index)
+            else:
+                return index
+    if multiple is True:
+        return result
+    else:
+        return None
 
 
 def find_indices(list_param, key):

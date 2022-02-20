@@ -65,12 +65,15 @@ def add_hline_to_unnamed_list(unnamed_list, hline1_param, hline2_param, index_pa
 def combine_unnamed_list_self(unnamed_list):
     new_unnamed = []
     min_distance = 5
+
+    def condition_funct(index, value):
+        return value['index'] == new_unnamed[j]['index']
+
     for i in range(len(unnamed_list)):
         for j in range(len(new_unnamed)):
             if is_connected_hlines(unnamed_list[i]['hline'], new_unnamed[j]['hline'], min_distance):
-                index_list_of_same_index = utils.find_indices(new_unnamed,
-                                                              lambda index, value: value['index'] == new_unnamed[j][
-                                                                  'index'])
+
+                index_list_of_same_index = utils.find_index(new_unnamed, condition_funct, multiple=True)
 
                 for index_of_same_index in index_list_of_same_index:
                     new_unnamed[index_of_same_index]['index'] = unnamed_list[i]['index']

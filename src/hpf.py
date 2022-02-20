@@ -1,15 +1,8 @@
 import cv2 as cv
 import enum
 import numpy as np
-import os
 
-# 구현 할 때 사용한 스펙
-# cv 버젼(cv.__version__) -> 4.5.2
-# numpy 버젼(np.__version__) -> 1.19.5
-# 파이썬 버젼(python --version) -> 3.9.5
-
-
-# 그냥 상수들
+# 상수들
 X = 'x'
 Y = 'y'
 MAX_ALPHA = 'max_alpha'
@@ -207,7 +200,8 @@ class HPF:
 
 for i in range(12):
     # 이미지 읽기
-    directory_path = "C:/Users/think/workspace/palm-beesly/test_img"
+
+    directory_path = "/Users/david/workspace/palm-beesly/sample_img"
     image_name = f"sample{i}"
     image_path = directory_path + '/' + image_name + ".1.png"
 
@@ -222,26 +216,21 @@ for i in range(12):
     # gaussian(HPF의 3번째 인자)은 트랙바에서처럼 0~10만 가능함
 
     sb3x3 = HPF(HPF_type.SB3X3, alpha=500, gaussian=1).process(img)
-    # cv.imshow('sb3x3', sb3x3)
-    cv.imwrite(os.path.join(directory_path, image_name + ".2.png"), sb3x3)
+    cv.imshow('sb3x3', sb3x3)
 
     sb5x5 = HPF(HPF_type.SB5X5, alpha=500, gaussian=2)
-    # cv.imshow('sb5x5', sb5x5.process(img))
-    cv.imwrite(os.path.join(directory_path, image_name + ".3.png"), sb5x5.process(img))
+    cv.imshow('sb5x5', sb5x5.process(img))
 
     sb7x7 = HPF(HPF_type.SB7X7, alpha=500, gaussian=3)
     sb7x7_result = sb7x7.process(img)
-    # cv.imshow('sb7x7', sb7x7_result)
-    cv.imwrite(os.path.join(directory_path, image_name + ".4.png"), sb7x7_result)
+    cv.imshow('sb7x7', sb7x7_result)
 
     sc3x3 = HPF(HPF_type.SC3X3, alpha=500, gaussian=4).process(img)
-    # cv.imshow('sc3x3', sc3x3)
-    cv.imwrite(os.path.join(directory_path, image_name + ".5.png"), sc3x3)
+    cv.imshow('sc3x3', sc3x3)
 
     sc5x5 = HPF(HPF_type.SC5X5, alpha=500, gaussian=5).process(img)
-    # cv.imshow('sc5x5', sc5x5)
-    cv.imwrite(os.path.join(directory_path, image_name + ".6.png"), sc5x5)
+    cv.imshow('sc5x5', sc5x5)
 
-    # cv.waitKey(0)
-    # cv.destroyAllWindows()
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 print("done")

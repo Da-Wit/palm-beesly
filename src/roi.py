@@ -55,7 +55,7 @@ for i in range(number_of_sample_images):
                                     landmarks[17],  # PINKY_MCP
                                     ])
 
-    nucleus = utils.center(palm_except_fingers)
+    nucleus = utils.get_center_of_mass(palm_except_fingers)
 
     pts = np.array([wrist, nucleus], np.int32)
 
