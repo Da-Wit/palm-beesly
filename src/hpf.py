@@ -26,7 +26,7 @@ scharr_divider = 10
 MAX_GAUSSIAN_VALUE = 10
 
 
-class HPF_type(enum.IntEnum):
+class HPF_TYPE(enum.IntEnum):
     SB3X3 = 0
     SB5X5 = 1
     SB7X7 = 2
@@ -36,7 +36,7 @@ class HPF_type(enum.IntEnum):
 
 # 각 필터들에 해당하는 데이터
 HPF_kernel = {
-    HPF_type.SB3X3: {X: np.array([[-1, 0, 1],
+    HPF_TYPE.SB3X3: {X: np.array([[-1, 0, 1],
                                   [-2, 0, 2],
                                   [-1, 0, 1]]),
                      Y: np.array([[-1, -2, -1],
@@ -45,7 +45,7 @@ HPF_kernel = {
                      MAX_ALPHA: max_sobel_alpha,
                      DIVIDER: sobel_divider
                      },
-    HPF_type.SB5X5: {X: np.array([
+    HPF_TYPE.SB5X5: {X: np.array([
         [-5, -4, 0, 4, 5],
         [-8, -10, 0, 10, 8],
         [-10, -20, 0, 20, 10],
@@ -61,7 +61,7 @@ HPF_kernel = {
                      MAX_ALPHA: max_sobel_alpha,
                      DIVIDER: sobel_divider
                      },
-    HPF_type.SB7X7: {X: np.array([
+    HPF_TYPE.SB7X7: {X: np.array([
         [-3 / 18, -2 / 13, -1 / 10, 0, 1 / 10, 2 / 13, 3 / 18],
         [-3 / 13, -2 / 8, -1 / 5, 0, 1 / 5, 2 / 8, 3 / 13],
         [-3 / 10, -2 / 5, -1 / 2, 0, 1 / 2, 2 / 5, 3 / 10],
@@ -82,7 +82,7 @@ HPF_kernel = {
         DIVIDER: sobel_divider
     },
 
-    HPF_type.SC3X3: {X: np.array([[-3, 0, 3],
+    HPF_TYPE.SC3X3: {X: np.array([[-3, 0, 3],
                                   [-10, 0, 10],
                                   [-3, 0, 3]]) / 60,
                      Y: np.array([[-3, -10, -3],
@@ -91,7 +91,7 @@ HPF_kernel = {
                      MAX_ALPHA: max_scharr_alpha,
                      DIVIDER: scharr_divider
                      },
-    HPF_type.SC5X5: {X: np.array([
+    HPF_TYPE.SC5X5: {X: np.array([
         [-1, -1, 0, 1, 1],
         [-2, -2, 0, 2, 2],
         [-3, -6, 0, 6, 3],
@@ -112,7 +112,7 @@ HPF_kernel = {
 class HPF:
     def __init__(self, filter_type, alpha, gaussian):
         # 예외처리
-        if not isinstance(filter_type, HPF_type):
+        if not isinstance(filter_type, HPF_TYPE):
             print('Given HPF type is not supported.')
             exit(1)
 
@@ -147,9 +147,7 @@ class HPF:
 
         return None
 
-    def calculate_HPF(self, img):
-        gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-
+    def calculate_HPF(self, gray):
         # 소벨 필터값
         x_kernel = self.kernel[X]
         y_kernel = self.kernel[Y]
@@ -191,46 +189,50 @@ class HPF:
 
             self.gaussian_ksize = (gaussian * 2) + 1
 
-        HPF_calculated = self.calculate_HPF(img_param)
+        gray = cv.cvtColor(img_param, cv.COLOR_BGR2GRAY) \
+            if len(img_param.shape) == 3 \
+            else img_param.copy()
+
+        HPF_calculated = self.calculate_HPF(gray)
         result_img = self.calculate_gaussian(HPF_calculated)
         return result_img
 
 
 # 아래는 사용 예시입니다
+if __name__ == '__main__':
+    for i in range(12):
+        # 이미지 읽기
 
-for i in range(12):
-    # 이미지 읽기
+        directory_path = "/Users/david/workspace/palm-beesly/sample_img"
+        image_name = f"sample{i}"
+        image_path = directory_path + '/' + image_name + ".1.png"
 
-    directory_path = "/Users/david/workspace/palm-beesly/sample_img"
-    image_name = f"sample{i}"
-    image_path = directory_path + '/' + image_name + ".1.png"
+        # "C:/Users/think/workspace/palm-beesly/test_img/sample2.1.png"
+        img = cv.imread(image_path)
 
-    # "C:/Users/think/workspace/palm-beesly/test_img/sample2.1.png"
-    img = cv.imread(image_path)
+        if img is None:
+            print(f"Image{i} is empty!!")
+            continue
+            # exit(1)
+        # alpha(HPF의 2번째 인자)는 트랙바에서처럼 필터마다 최대값이 다른고 0 ~ max_sobel_alpha 혹은 0 ~ max_scharr_alpha이어야 함
+        # gaussian(HPF의 3번째 인자)은 트랙바에서처럼 0~10만 가능함
 
-    if img is None:
-        print(f"Image{i} is empty!!")
-        continue
-        # exit(1)
-    # alpha(HPF의 2번째 인자)는 트랙바에서처럼 필터마다 최대값이 다른고 0 ~ max_sobel_alpha 혹은 0 ~ max_scharr_alpha이어야 함
-    # gaussian(HPF의 3번째 인자)은 트랙바에서처럼 0~10만 가능함
+        sb3x3 = HPF(HPF_TYPE.SB3X3, alpha=500, gaussian=1).process(img)
+        cv.imshow('sb3x3', sb3x3)
 
-    sb3x3 = HPF(HPF_type.SB3X3, alpha=500, gaussian=1).process(img)
-    cv.imshow('sb3x3', sb3x3)
+        sb5x5 = HPF(HPF_TYPE.SB5X5, alpha=500, gaussian=2)
+        cv.imshow('sb5x5', sb5x5.process(img))
 
-    sb5x5 = HPF(HPF_type.SB5X5, alpha=500, gaussian=2)
-    cv.imshow('sb5x5', sb5x5.process(img))
+        sb7x7 = HPF(HPF_TYPE.SB7X7, alpha=500, gaussian=3)
+        sb7x7_result = sb7x7.process(img)
+        cv.imshow('sb7x7', sb7x7_result)
 
-    sb7x7 = HPF(HPF_type.SB7X7, alpha=500, gaussian=3)
-    sb7x7_result = sb7x7.process(img)
-    cv.imshow('sb7x7', sb7x7_result)
+        sc3x3 = HPF(HPF_TYPE.SC3X3, alpha=500, gaussian=4).process(img)
+        cv.imshow('sc3x3', sc3x3)
 
-    sc3x3 = HPF(HPF_type.SC3X3, alpha=500, gaussian=4).process(img)
-    cv.imshow('sc3x3', sc3x3)
+        sc5x5 = HPF(HPF_TYPE.SC5X5, alpha=500, gaussian=5).process(img)
+        cv.imshow('sc5x5', sc5x5)
 
-    sc5x5 = HPF(HPF_type.SC5X5, alpha=500, gaussian=5).process(img)
-    cv.imshow('sc5x5', sc5x5)
-
-    cv.waitKey(0)
-    cv.destroyAllWindows()
-print("done")
+        cv.waitKey(0)
+        cv.destroyAllWindows()
+    print("done")
