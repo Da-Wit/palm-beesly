@@ -40,6 +40,11 @@ def adaptive_threshold(img_param, box_size, constant):
     return result
 
 
+def otsu_threshold(img_param):
+    ret, otsu = cv.threshold(img_param, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+    return ret, otsu
+
+
 # to use this function, you must install opencv-contrib-python
 # just paste it: pip install opencv-contrib-python
 def thin(gray_img):

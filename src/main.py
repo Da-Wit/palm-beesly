@@ -2,6 +2,7 @@ import cv2 as cv
 from lines import Lines
 from timeit import default_timer as timer
 from copy import deepcopy as cp
+import constants
 import utils
 import numpy as np
 import platform
@@ -120,7 +121,7 @@ def find_one_orientation_lines_with_debugging(img_param, max_line_distance, is_h
                     lines.handle_point([x, y], max_line_distance, unique_num, is_horizontal, debug=True,
                                        img_for_debugging=img_for_debugging)
                     unique_num += 1
-                prev_bgr = cp.deepcopy(img_for_debugging[y][x])
+                prev_bgr = cp(img_for_debugging[y][x])
                 img_for_debugging[y][x] = [0, 0, 255]
                 cv.imshow("debugging", img_for_debugging)
                 k = cv.waitKey(0)
@@ -188,7 +189,7 @@ def init_imgs():
     image = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
 
     if image is None:
-        print("Image is empty!!")
+        print(constants.ERROR_MESSAGE["IMG_IS_EMPTY"])
         exit(1)
     return image
 
@@ -203,7 +204,7 @@ def thin(bgr_img):
 if __name__ == "__main__":
     grayed = init_imgs()
     img, vertices = get_roi(grayed)
-    thr = utils.adaptive_threshold(img, box_size=11)
+    thr = utils.adaptive_threshold(img, 11, 0)
 
     cv.imshow("original", img)
     cv.imshow("adaptiveThreshold", thr)

@@ -76,7 +76,7 @@ def get_intersection_coord_between_finger_and_palm(pip_mp, mcp_mp, img, pip_rati
     pip = get_finger_coord(pip_mp, mcp_mp, width, height, pip_ratio)
     mcp = get_finger_coord(mcp_mp, pip_mp, width, height, mcp_ratio)
     X, Y = 0, 1
-    binary_img = utils.adaptive_threshold(img)
+    binary_img = utils.adaptive_threshold(img, 11)
 
     # y1 must be bigger than y2
     y1, y2, x1, x2 = 0, 0, 0, 0
@@ -90,7 +90,7 @@ def get_intersection_coord_between_finger_and_palm(pip_mp, mcp_mp, img, pip_rati
 
 
 def get_coords(landmark, img):
-    height, width, _ = img.shape
+    height, width, _ = img.shape[:2]
     thumb_outside = get_coord(
         landmark[THUMB_MCP].x, landmark[THUMB_MCP].y, width, height)
     thumb_mid = get_finger_coord(
@@ -130,11 +130,8 @@ def refine_coords(coords):
     return refined_coords
 
 
-def get_hand_form(image, mp_hands):
-    with mp_hands.Hands(
-            static_image_mode=True,
-            max_num_hands=1,
-            min_detection_confidence=0.5) as hands:
+def get_hand_form(image):
+    with mp_hands.Hands(static_image_mode=True, max_num_hands=1, min_detection_confidence=0.5) as hands:
         # Convert the BGR image to RGB before processing.
         results = hands.process(cv.cvtColor(image, cv.COLOR_BGR2RGB))
 
@@ -176,7 +173,7 @@ def get_part_of_contour(contour, coord1, coord2):
 
 def get_palm(image):
     img = image.copy()
-    landmark = get_hand_form(img, mp_hands)
+    landmark = get_hand_form(img)
     if not landmark:
         return None
     img = utils.remove_bground(img)
