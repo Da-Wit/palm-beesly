@@ -31,12 +31,12 @@ def distance_between(coord1, coord2):
 
 # 두 좌표를 인수로 받아서 그 두 좌표를 지나는 선의 기울기를 구하는 함수
 # 기울기를 구하는  분모가 0이 될 수 있어서, 분모에 1e-9(적당히 작은 값)를 더했다.
-def get_slope(coord1, coord2):
+def slope_between(coord1, coord2):
     return (coord1[1] - coord2[1]) / ((coord1[0] - coord2[0]) + 10 ** (-9))
 
 
-def adaptive_threshold(img_param, box_size):
-    result = cv.adaptiveThreshold(img_param, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, box_size, 0)
+def adaptive_threshold(img_param, box_size, constant):
+    result = cv.adaptiveThreshold(img_param, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, box_size, constant)
     return result
 
 

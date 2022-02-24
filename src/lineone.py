@@ -1,4 +1,4 @@
-from utils import get_slope
+from utils import slope_between
 from utils import distance_between
 import random
 
@@ -51,7 +51,7 @@ class LineOne:
             front_point = point_list[idx]
             back_point = point_list[idx + half]
 
-            sum_gradient = sum_gradient + get_slope(front_point, back_point)
+            sum_gradient = sum_gradient + slope_between(front_point, back_point)
 
         avg_gradient = sum_gradient / half
         self.own_slope = avg_gradient
@@ -59,7 +59,7 @@ class LineOne:
     def avg_slope_with(self, point):
         sum_gradient = 0
         for i in range(self.number_of_front_points_to_find_slope):
-            sum_gradient = sum_gradient + get_slope(point, self.all_point_list[-i])
+            sum_gradient = sum_gradient + slope_between(point, self.all_point_list[-i])
         avg_gradient = sum_gradient / self.number_of_front_points_to_find_slope
 
         return avg_gradient
