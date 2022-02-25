@@ -1,165 +1,183 @@
 import cv2 as cv
 import mediapipe as mp
 import numpy as np
-import using_mp
 import utils
+from constants import ERROR_MESSAGE
 
 mp_hands = mp.solutions.hands
-mp_drawing = mp.solutions.drawing_utils
+WRIST = mp_hands.HandLandmark.WRIST
+THUMB_CMC = mp_hands.HandLandmark.THUMB_CMC
+THUMB_MCP = mp_hands.HandLandmark.THUMB_MCP
+THUMB_IP = mp_hands.HandLandmark.THUMB_IP
+THUMB_TIP = mp_hands.HandLandmark.THUMB_TIP
+INDEX_FINGER_MCP = mp_hands.HandLandmark.INDEX_FINGER_MCP
+INDEX_FINGER_PIP = mp_hands.HandLandmark.INDEX_FINGER_PIP
+INDEX_FINGER_DIP = mp_hands.HandLandmark.INDEX_FINGER_DIP
+INDEX_FINGER_TIP = mp_hands.HandLandmark.INDEX_FINGER_TIP
+MIDDLE_FINGER_MCP = mp_hands.HandLandmark.MIDDLE_FINGER_MCP
+MIDDLE_FINGER_PIP = mp_hands.HandLandmark.MIDDLE_FINGER_PIP
+MIDDLE_FINGER_DIP = mp_hands.HandLandmark.MIDDLE_FINGER_DIP
+MIDDLE_FINGER_TIP = mp_hands.HandLandmark.MIDDLE_FINGER_TIP
+RING_FINGER_MCP = mp_hands.HandLandmark.RING_FINGER_MCP
+RING_FINGER_PIP = mp_hands.HandLandmark.RING_FINGER_PIP
+RING_FINGER_DIP = mp_hands.HandLandmark.RING_FINGER_DIP
+RING_FINGER_TIP = mp_hands.HandLandmark.RING_FINGER_TIP
+PINKY_MCP = mp_hands.HandLandmark.PINKY_MCP
+PINKY_PIP = mp_hands.HandLandmark.PINKY_PIP
+PINKY_DIP = mp_hands.HandLandmark.PINKY_DIP
+PINKY_TIP = mp_hands.HandLandmark.PINKY_TIP
 
-number_of_sample_images = 44
 
-# 이미지 샘플 개수만큼 for문을 돈다
-for i in range(number_of_sample_images):
-    image_path = f"/Users/david/workspace/palm-beesly/test_img/sample{3}.png"
-    # image_path = f"C:/Users/think/workspace/palm-beesly/test_img/sample{25}.png"
-    image = cv.imread(image_path)
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def tuple(self, inverse=False):
+        return (self.x, self.y) \
+            if inverse is False \
+            else (self.y, self.x)
+
+    def distance_between(self, another_one):
+        return utils.distance_between((self.x, self.y), (another_one.x, another_one.y))
+
+    def slope_between(self, another_one):
+        return utils.slope_between((self.x, self.y), (another_one.x, another_one.y))
+
+
+def init_img(i):
+    image_path = f"/Users/david/workspace/palm-beesly/sample_img/sample{i}.png"
+    img = cv.imread(image_path)
     # 이미지가 제대로 불러와지지 않으면 에러 출력하고 다음 숫자로 넘어감
-    if image is None:
-        print(f"test_img/sample{i}.png is empty!!")
-        continue
+    if img is None:
+        print(ERROR_MESSAGE["IMG_IS_EMPTY"])
+        exit(1)
+    return img
 
-    # 출력 시 화면에 적당한 크기로 출력되게 하기 위해 이미지를 resize함
-    image = utils.resize(image, height=600)
-    img = image.copy()
 
-    width = img.shape[1]
-    height = img.shape[0]
-    sonnal, coords = using_mp.get_palm(img)
+def get_landmarks(image):
+    with mp_hands.Hands(static_image_mode=True, max_num_hands=1, min_detection_confidence=0.5) as hands:
+        # Convert the BGR image to RGB before processing.
+        results = hands.process(cv.cvtColor(image, cv.COLOR_BGR2RGB))
+        if not results.multi_hand_landmarks:
+            return None
+        return results.multi_hand_landmarks[0].landmark
 
-    # # coords에 있는 값들 중 유효하지 않은 값은 [0,0]이 되도록 설정했습니다.
-    # # 만약 그 값을 제외하고 사용하고자 한다면(제 생각에 나름 합리적인 방법인)
-    # # 아래의 refine_coords를 사용하세요.
-    # # 사용 예시는 다음과 같습니다.
 
-    # # sonnal[0] : sonnal_top
-    # # sonnal[len(sonnal)-1] : sonnal_bottom
-    # cv.circle(image, sonnal[0][0], 5, (0, 255, 0), 2)
-    # cv.circle(image, sonnal[len(sonnal)-1][0], 5, (0, 255, 0), 2)
-    palm = np.append(sonnal, coords, axis=0)
-    # img = cv.polylines(img, [palm], True, (0, 255, 0), 2)
+def calculate_landmark_points(landmarks, height, width):
+    points = []
+    for l in landmarks:
+        x = round(l.x * width)
+        y = round(l.y * height)
 
-    landmarks = np.array(using_mp.get_hand_landmark(img))
+        points.append(Point(x, y))
+    return points
 
-    boundingRect = cv.boundingRect(landmarks)
-    x1, y1, x2, y2 = boundingRect
-    # cv.circle(img, (x1+ round(x2/2), y1), 5, (255, 255, 0), 10)
 
-    wrist = [landmarks[0][0], landmarks[0][1]]
-    # 손바닥 중심
+def middle_finger(landmark_points_param, first_idx):
+    if len(landmark_points_param) < (first_idx + 2):
+        print(ERROR_MESSAGE["SHORT_LANDMARK_POINTS_PARAM"])
+        exit(1)
+    first_point = landmark_points_param[first_idx]
+    second_point = landmark_points_param[first_idx + 1]
 
-    palm_except_fingers = np.array([landmarks[0],  # WRIST
-                                    landmarks[5],  # INDEX_FINGER_MCP
-                                    landmarks[9],  # MIDDLE_FINGER_MCP
-                                    landmarks[13],  # RING_FINGER_MCP
-                                    landmarks[17],  # PINKY_MCP
-                                    ])
+    x = ((first_point.x * 0.6) + (second_point.x * 0.4))
+    y = ((first_point.y * 0.6) + (second_point.y * 0.4))
 
-    nucleus = utils.get_center_of_mass(palm_except_fingers)
+    result_point = int(x), int(y)
+    return Point(*result_point)
 
-    pts = np.array([wrist, nucleus], np.int32)
 
-    # cv.circle(img, wrist, 5, (0, 0, 255), 2)
-    cv.circle(img, nucleus, 1, (255, 255, 255), 5)
-    cv.circle(img, nucleus, 5, (0, 0, 255), 2)
+def get_outta_sonnal_top(ring, pinky_mcp, pinky_pip):
+    x = pinky_mcp.x + (pinky_mcp.x - ring.x) * 0.9
+    y = pinky_mcp.y + (pinky_mcp.y - pinky_pip.y) * 0.2
 
-    cv.rectangle(img, boundingRect, (255, 0, 0), 3)
-    # 손의 특정 좌표들을 화면에 표시
+    return Point(int(x), int(y))
 
-    # All landmarks iteration
-    for coord in landmarks:
-        cv.circle(img, coord, 1, (255, 255, 255), 4)
-        cv.circle(img, coord, 4, (0, 0, 0), 2)
 
-    # palm_except_fingers iteration
-    for coord in palm_except_fingers:
-        cv.circle(img, coord, 1, (255, 255, 255), 4)
-        cv.circle(img, coord, 4, (0, 255, 0), 2)
+def get_outta_sonnal_bottom(ring, pinky_mcp, pinky_pip):
+    x = pinky_mcp.x + (pinky_mcp.x - ring.x) * 0.9
+    y = pinky_mcp.y + (pinky_mcp.y - pinky_pip.y) * 0.8
 
-    cv.imshow(f"image{i} original", img)
-    # cv.circle(img, (nucleus[0], nucleus[1] + 10), 5, (0, 0, 255), 2)
+    return Point(int(x), int(y))
 
-    degree_to_rotate = utils.getAngle(nucleus, wrist) - 90
 
-    print(degree_to_rotate + 90)
+def get_index_left(index_mcp, middle_mcp, index_mid):
+    x = index_mcp.x + (index_mcp.x - middle_mcp.x) * 0.8
+    y = (index_mcp.y * 0.8) + (index_mid.y * 0.2)
 
-    left_top = (0, 0)
-    right_top = (width - 1, 0)
-    left_bottom = (0, height - 1)
-    right_bottom = (width - 1, height - 1)
+    return Point(int(x), int(y))
 
-    rotated_left_top = utils.rotate_point(left_top, nucleus, -degree_to_rotate)
-    rotated_right_top = utils.rotate_point(
-        right_top, nucleus, -degree_to_rotate)
-    rotated_left_bottom = utils.rotate_point(
-        left_bottom, nucleus, -degree_to_rotate)
-    rotated_right_bottom = utils.rotate_point(
-        right_bottom, nucleus, -degree_to_rotate)
 
-    min_x, max_x, _, _ = cv.minMaxLoc(np.array([rotated_left_top[0],
-                                                rotated_right_top[0],
-                                                rotated_left_bottom[0],
-                                                rotated_right_bottom[0],
-                                                ]))
+def crop(img_param, pts_li, black_background):
+    pts = np.array(pts_li, np.int32)
 
-    min_y, max_y, _, _ = cv.minMaxLoc(np.array([rotated_left_top[1],
-                                                rotated_right_top[1],
-                                                rotated_left_bottom[1],
-                                                rotated_right_bottom[1],
-                                                ]))
-    rotated_width, rotated_height = round(max_x - min_x), round(max_y - min_y)
+    rect = cv.boundingRect(pts)
+    x, y, w, h = rect
+    croped = img_param[y:y + h, x:x + w].copy()
 
-    # cv.putText(img, f"{angle}", (20, 50), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255))
-    # pts = pts.reshape((-1, 1, 2));
+    pts = pts - pts.min(axis=0)
 
-    M = cv.getRotationMatrix2D(nucleus, degree_to_rotate, 1.0)
+    mask = np.zeros(croped.shape[:2], np.uint8)
+    cv.drawContours(mask, [pts], -1, (255, 255, 255), -1, cv.LINE_AA)
 
-    top_border_size = min_y * -1 if min_y < 0 else 0
-    bottom_border_size = max_y - width if max_y - width > 0 else 0
-    left_border_size = min_x * -1 if min_x < 0 else 0
-    right_border_size = max_x - width if max_x - width > 0 else 0
+    dst = cv.bitwise_and(croped, croped, mask=mask)
+    if black_background:
+        return dst
+    bg = np.ones_like(croped, np.uint8) * 255
+    cv.bitwise_not(bg, bg, mask=mask)
+    dst2 = bg + dst
+    return dst2
 
-    horizontal_border_size = round((rotated_width - width) / 2)
-    vertical_border_size = round((rotated_height - height) / 2)
 
-    img = cv.copyMakeBorder(
-        img,
-        top=round(top_border_size),
-        bottom=round(bottom_border_size),
-        left=round(left_border_size),
-        right=round(right_border_size),
-        borderType=cv.BORDER_CONSTANT,
-        value=[0, 0, 255]
-    )
+def get_palm_roi(img_param):
+    img = img_param.copy()
+    height, width = img.shape[:2]
+    landmarks = get_landmarks(img)
 
-    # cv.imshow("extended img", img)
+    if landmarks is None:
+        print(ERROR_MESSAGE["MEDIAPIPE_CANNOT_DETECT_LANDMARK_OF_HAND"])
+        exit(1)
 
-    # rotated_img = cv.CreateMat(rotated_height, rotated_width, )
-    img = cv.warpAffine(img, M, (rotated_width, rotated_height))
+    landmark_points = calculate_landmark_points(landmarks, height, width)
 
-    # 아래 이 주석은 수직, 수평 테두리 두께를 출력하는 코드임
-    hori_text = f"hori: {horizontal_border_size}"
-    vert_text = f"vert: {vertical_border_size}"
+    index_mid = middle_finger(landmark_points, INDEX_FINGER_MCP)
+    middle_mid = middle_finger(landmark_points, MIDDLE_FINGER_MCP)
+    ring_mid = middle_finger(landmark_points, RING_FINGER_MCP)
 
-    text_size = cv.getTextSize(hori_text, cv.FONT_HERSHEY_SIMPLEX, 1, 2)
-    # cv.putText(img, hori_text, (50,50),cv.FONT_HERSHEY_SIMPLEX ,
-    #                1, (0,255,0), 2, cv.LINE_AA)
-    # cv.putText(img, vert_text, (50,50+text_size[0][1]+10),cv.FONT_HERSHEY_SIMPLEX ,
-    #                1, (0,255,0), 2, cv.LINE_AA)
+    ring_mcp = landmark_points[RING_FINGER_MCP]
+    pinky_mcp = landmark_points[PINKY_MCP]
+    pinky_pip = landmark_points[PINKY_PIP]
 
-    # print(text_size[0])
-    # cv.putText(img, vert_text, (50+text_size[0],50+text_size[1]),cv.FONT_HERSHEY_SIMPLEX ,
-    #                1, (0,255,0), 2, cv.LINE_AA)
-    # img = cv.polylines(img, [pts], False, (0, 255, 0), 2)
+    index_mcp = landmark_points[INDEX_FINGER_MCP]
+    middle_mcp = landmark_points[MIDDLE_FINGER_MCP]
 
-    # cv.imshow(f"image{i}", img)
+    thumb_mcp = landmark_points[THUMB_MCP]
+    wrist = landmark_points[WRIST]
 
-    k = cv.waitKey(0)
-    cv.destroyAllWindows()
-    # for문 도중 Esc를 누르면 프로그램이 종료되게 함
-    if k == 27:  # Esc key to stop
-        break
-    elif k == -1:  # normally -1 returned,so don't print it
-        continue
+    outta_sonnal_top = get_outta_sonnal_top(ring_mcp, pinky_mcp, pinky_pip)
+    outta_sonnal_bottom = get_outta_sonnal_bottom(ring_mcp, pinky_mcp, pinky_pip)
 
-cv.destroyAllWindows()
+    index_left = get_index_left(index_mcp, middle_mcp, index_mid)
+
+    roi = [index_mid,
+           middle_mid,
+           ring_mid,
+           outta_sonnal_top,
+           outta_sonnal_bottom,
+           wrist,
+           thumb_mcp,
+           index_left]
+    roi = [p.tuple() for p in roi]
+    cropped = crop(img, roi, black_background=True)
+
+    return cropped
+
+
+if __name__ == "__main__":
+    for i in range(30):
+        print(f"i : {i}")
+        image = init_img(i)
+        roi = get_palm_roi(image)
+        cv.imshow('roi', roi)
+        cv.waitKey(0)
