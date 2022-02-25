@@ -114,43 +114,82 @@ def get_outta_sonnal_bottom(ring, pinky_mcp, pinky_pip):
     return Point(int(x), int(y))
 
 
+def get_index_left(index_mcp, middle_mcp, index_mid):
+    x = index_mcp.x + (index_mcp.x - middle_mcp.x) * 0.8
+    y = (index_mcp.y * 0.8) + (index_mid.y * 0.2)
+
+    return Point(int(x), int(y))
+
+
+def crop(img_param, pts_li, black_background):
+    pts = np.array(pts_li, np.int32)
+
+    rect = cv.boundingRect(pts)
+    x, y, w, h = rect
+    croped = img_param[y:y + h, x:x + w].copy()
+
+    pts = pts - pts.min(axis=0)
+
+    mask = np.zeros(croped.shape[:2], np.uint8)
+    cv.drawContours(mask, [pts], -1, (255, 255, 255), -1, cv.LINE_AA)
+
+    dst = cv.bitwise_and(croped, croped, mask=mask)
+    if black_background:
+        return dst
+    bg = np.ones_like(croped, np.uint8) * 255
+    cv.bitwise_not(bg, bg, mask=mask)
+    dst2 = bg + dst
+    return dst2
+
+
+def get_palm_roi(img_param):
+    img = img_param.copy()
+    height, width = img.shape[:2]
+    landmarks = get_landmarks(img)
+
+    if landmarks is None:
+        print(ERROR_MESSAGE["MEDIAPIPE_CANNOT_DETECT_LANDMARK_OF_HAND"])
+        exit(1)
+
+    landmark_points = calculate_landmark_points(landmarks, height, width)
+
+    index_mid = middle_finger(landmark_points, INDEX_FINGER_MCP)
+    middle_mid = middle_finger(landmark_points, MIDDLE_FINGER_MCP)
+    ring_mid = middle_finger(landmark_points, RING_FINGER_MCP)
+
+    ring_mcp = landmark_points[RING_FINGER_MCP]
+    pinky_mcp = landmark_points[PINKY_MCP]
+    pinky_pip = landmark_points[PINKY_PIP]
+
+    index_mcp = landmark_points[INDEX_FINGER_MCP]
+    middle_mcp = landmark_points[MIDDLE_FINGER_MCP]
+
+    thumb_mcp = landmark_points[THUMB_MCP]
+    wrist = landmark_points[WRIST]
+
+    outta_sonnal_top = get_outta_sonnal_top(ring_mcp, pinky_mcp, pinky_pip)
+    outta_sonnal_bottom = get_outta_sonnal_bottom(ring_mcp, pinky_mcp, pinky_pip)
+
+    index_left = get_index_left(index_mcp, middle_mcp, index_mid)
+
+    roi = [index_mid,
+           middle_mid,
+           ring_mid,
+           outta_sonnal_top,
+           outta_sonnal_bottom,
+           wrist,
+           thumb_mcp,
+           index_left]
+    roi = [p.tuple() for p in roi]
+    cropped = crop(img, roi, black_background=True)
+
+    return cropped
+
+
 if __name__ == "__main__":
-    for i in range(33):
+    for i in range(30):
         print(f"i : {i}")
-        original = init_img(i)
-        # cv.imshow('original', original)
-
-        copied = original.copy()
-        height, width = copied.shape[:2]
-        landmarks = get_landmarks(copied)
-
-        if landmarks is None:
-            print(ERROR_MESSAGE["MEDIAPIPE_CANNOT_DETECT_LANDMARK_OF_HAND"])
-            exit(1)
-
-        landmark_points = calculate_landmark_points(landmarks, height, width)
-
-        index_mid = middle_finger(landmark_points, INDEX_FINGER_MCP)
-        middle_mid = middle_finger(landmark_points, MIDDLE_FINGER_MCP)
-        ring_mid = middle_finger(landmark_points, RING_FINGER_MCP)
-
-        ring_mcp = landmark_points[RING_FINGER_MCP]
-        pinky_mcp = landmark_points[PINKY_MCP]
-        pinky_pip = landmark_points[PINKY_PIP]
-
-        outta_sonnal_top = get_outta_sonnal_top(ring_mcp, pinky_mcp, pinky_pip)
-        outta_sonnal_bottom = get_outta_sonnal_bottom(ring_mcp, pinky_mcp, pinky_pip)
-
-        for p in (index_mid, middle_mid, ring_mid, outta_sonnal_top, outta_sonnal_bottom):
-            cv.circle(copied, p.tuple(), 1, (255, 255, 255), 4)
-            cv.circle(copied, p.tuple(), 4, (0, 0, 0), 2)
-
-        for p in landmark_points:
-            cv.circle(copied, p.tuple(), 1, (255, 255, 255), 4)
-            cv.circle(copied, p.tuple(), 4, (0, 0, 0), 2)
-
-        cv.imshow('copied', copied)
-        k = cv.waitKey(0)
-        # for문 도중 Esc를 누르면 프로그램이 종료되게 함
-        if k in (ord('q'), ord('Q'), 66, 27):  # 66 indicates ㅂ, 27 does esc
-            exit(0)
+        image = init_img(i)
+        roi = get_palm_roi(image)
+        cv.imshow('roi', roi)
+        cv.waitKey(0)
