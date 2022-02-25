@@ -46,8 +46,8 @@ class Point:
         return utils.slope_between((self.x, self.y), (another_one.x, another_one.y))
 
 
-def init_img():
-    image_path = f"/Users/david/workspace/palm-beesly/sample_img/sample{i}.png"
+def init_img(i):
+    image_path = f"/Users/david/workspace/palm-beesly/sample_img/sample{2}.png"
     img = cv.imread(image_path)
     # 이미지가 제대로 불러와지지 않으면 에러 출력하고 다음 숫자로 넘어감
     if img is None:
@@ -100,24 +100,11 @@ def blur_equalizehist_adap_thresh(bgr_img):
     return adaptive_threshold
 
 
-def get_point_of_outta_sonnal(img_param, ring, pinky, n):
-    slope = utils.slope_between(ring.tuple(), pinky.tuple())
-    constant = pinky.y - int(pinky.x * slope)
-    primary_sonnal_x = pinky.x + (((pinky.x - ring.x) * n) / 100)
+def get_point_of_outta_sonnal(ring, pinky_mcp, pinky_pip):
+    x = pinky_mcp.x + (pinky_mcp.x - ring.x) * 0.9
+    y = pinky_mcp.y + (pinky_mcp.y - pinky_pip.y) * 0.2
 
-    adaptive = blur_equalizehist_adap_thresh(img_param)
-    height, width = img_param.shape[:2]
-
-    # init_y = pinky.y + (((pinky.y - ring.y) * n) / 100)
-
-    if primary_sonnal_x > pinky.x:
-        prev_gray = img_param[primary_sonnal_x]
-        for repeating_x in range(primary_sonnal_x, pinky.x - 1, -1):
-            repeating_y = int(repeating_x * slope) + constant
-
-    # TODO It's a temporary placeholder of return values.
-    # If you complete implementing this function, change return value accordingly.
-    return Point(909, 3.14159265358979338)
+    return Point(int(x), int(y))
 
 
 # def midnight_memories(img_param, mcp, tip):
@@ -150,7 +137,7 @@ def get_point_of_outta_sonnal(img_param, ring, pinky, n):
 if __name__ == "__main__":
     for i in range(33):
         print(f"i : {i}")
-        original = init_img()
+        original = init_img(i)
         # cv.imshow('original', original)
 
         copied = original.copy()
@@ -170,7 +157,9 @@ if __name__ == "__main__":
 
         ring_mcp = landmark_points[RING_FINGER_MCP]
         pinky_mcp = landmark_points[PINKY_MCP]
-        outta_sonnal = get_point_of_outta_sonnal(copied, ring_mcp, pinky_mcp, 85)
+        pinky_pip = landmark_points[PINKY_PIP]
+
+        outta_sonnal = get_point_of_outta_sonnal(ring_mcp, pinky_mcp, pinky_pip)
         im_black = blur_equalizehist_adap_thresh(copied)
 
         for p in (index_mid, middle_mid, ring_mid, outta_sonnal):
