@@ -47,7 +47,7 @@ class Point:
 
 
 def init_img(i):
-    image_path = f"/Users/david/workspace/palm-beesly/sample_img/sample{2}.png"
+    image_path = f"/Users/david/workspace/palm-beesly/sample_img/sample{i}.png"
     img = cv.imread(image_path)
     # 이미지가 제대로 불러와지지 않으면 에러 출력하고 다음 숫자로 넘어감
     if img is None:
@@ -100,39 +100,19 @@ def blur_equalizehist_adap_thresh(bgr_img):
     return adaptive_threshold
 
 
-def get_point_of_outta_sonnal(ring, pinky_mcp, pinky_pip):
+def get_point_of_outta_sonnal1(ring, pinky_mcp, pinky_pip):
     x = pinky_mcp.x + (pinky_mcp.x - ring.x) * 0.9
     y = pinky_mcp.y + (pinky_mcp.y - pinky_pip.y) * 0.2
 
     return Point(int(x), int(y))
 
 
-# def midnight_memories(img_param, mcp, tip):
-#     x_gap = mcp.x - tip.x
-#     y_gap = mcp.y - tip.y
-#
-#     smaller_x = mcp.x if x_gap <= 0 else tip.x
-#     bigger_x = tip.x if x_gap <= 0 else mcp.x
-#     smaller_y = mcp.y if y_gap <= 0 else tip.y
-#     bigger_y = tip.y if y_gap <= 0 else mcp.y
-#
-#     cropped = img_param[smaller_y:bigger_y + 1, smaller_x:bigger_x + 1].copy()
-#     cv.imshow("cropped", cropped)
-#     ret, thresh = cv.threshold(cropped, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
-#     cv.imshow("threshold", thresh)
-#     x1 = mcp.x - smaller_x
-#     x2 = tip.x - smaller_x
-#     y1 = mcp.y - smaller_y
-#     y2 = tip.y - smaller_y
-#
-#     point1 = Point(x1, y1)
-#     point2 = Point(x2, y2)
-#
-#     slope = point1.slope_between(point2)
-#
-#     flex_x, flex_y = x1, y1
-#
-#     while True:
+def get_point_of_outta_sonnal2(ring, pinky_mcp, pinky_pip):
+    x = pinky_mcp.x + (pinky_mcp.x - ring.x) * 0.9
+    y = pinky_mcp.y + (pinky_mcp.y - pinky_pip.y) * 0.8
+
+    return Point(int(x), int(y))
+
 
 if __name__ == "__main__":
     for i in range(33):
@@ -159,22 +139,19 @@ if __name__ == "__main__":
         pinky_mcp = landmark_points[PINKY_MCP]
         pinky_pip = landmark_points[PINKY_PIP]
 
-        outta_sonnal = get_point_of_outta_sonnal(ring_mcp, pinky_mcp, pinky_pip)
-        im_black = blur_equalizehist_adap_thresh(copied)
+        outta_sonnal1 = get_point_of_outta_sonnal1(ring_mcp, pinky_mcp, pinky_pip)
+        outta_sonnal2 = get_point_of_outta_sonnal2(ring_mcp, pinky_mcp, pinky_pip)
 
-        for p in (index_mid, middle_mid, ring_mid, outta_sonnal):
-            cv.circle(im_black, p.tuple(), 5, 255, 4)
+        for p in (index_mid, middle_mid, ring_mid, outta_sonnal1, outta_sonnal2):
             cv.circle(copied, p.tuple(), 1, (255, 255, 255), 4)
             cv.circle(copied, p.tuple(), 4, (0, 0, 0), 2)
 
         for p in landmark_points:
-            cv.circle(im_black, p.tuple(), 5, 255, 4)
             cv.circle(copied, p.tuple(), 1, (255, 255, 255), 4)
             cv.circle(copied, p.tuple(), 4, (0, 0, 0), 2)
 
         cv.imshow('copied', copied)
-        cv.imshow('im_black', im_black)
         k = cv.waitKey(0)
         # for문 도중 Esc를 누르면 프로그램이 종료되게 함
-        if k == 113:  # q key to stop
+        if k in (ord('q'), ord('Q'), 66, 27):  # 66 indicates ㅂ, 27 does esc
             exit(0)
