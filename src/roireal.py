@@ -100,14 +100,14 @@ def blur_equalizehist_adap_thresh(bgr_img):
     return adaptive_threshold
 
 
-def get_point_of_outta_sonnal1(ring, pinky_mcp, pinky_pip):
+def get_outta_sonnal_top(ring, pinky_mcp, pinky_pip):
     x = pinky_mcp.x + (pinky_mcp.x - ring.x) * 0.9
     y = pinky_mcp.y + (pinky_mcp.y - pinky_pip.y) * 0.2
 
     return Point(int(x), int(y))
 
 
-def get_point_of_outta_sonnal2(ring, pinky_mcp, pinky_pip):
+def get_outta_sonnal_bottom(ring, pinky_mcp, pinky_pip):
     x = pinky_mcp.x + (pinky_mcp.x - ring.x) * 0.9
     y = pinky_mcp.y + (pinky_mcp.y - pinky_pip.y) * 0.8
 
@@ -133,16 +133,15 @@ if __name__ == "__main__":
         index_mid = middle_finger(landmark_points, INDEX_FINGER_MCP)
         middle_mid = middle_finger(landmark_points, MIDDLE_FINGER_MCP)
         ring_mid = middle_finger(landmark_points, RING_FINGER_MCP)
-        pinky_mid = middle_finger(landmark_points, PINKY_MCP)
 
         ring_mcp = landmark_points[RING_FINGER_MCP]
         pinky_mcp = landmark_points[PINKY_MCP]
         pinky_pip = landmark_points[PINKY_PIP]
 
-        outta_sonnal1 = get_point_of_outta_sonnal1(ring_mcp, pinky_mcp, pinky_pip)
-        outta_sonnal2 = get_point_of_outta_sonnal2(ring_mcp, pinky_mcp, pinky_pip)
+        outta_sonnal_top = get_outta_sonnal_top(ring_mcp, pinky_mcp, pinky_pip)
+        outta_sonnal_bottom = get_outta_sonnal_bottom(ring_mcp, pinky_mcp, pinky_pip)
 
-        for p in (index_mid, middle_mid, ring_mid, outta_sonnal1, outta_sonnal2):
+        for p in (index_mid, middle_mid, ring_mid, outta_sonnal_top, outta_sonnal_bottom):
             cv.circle(copied, p.tuple(), 1, (255, 255, 255), 4)
             cv.circle(copied, p.tuple(), 4, (0, 0, 0), 2)
 
