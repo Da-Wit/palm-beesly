@@ -6,6 +6,10 @@ import constants
 import utils
 import numpy as np
 import platform
+from roi import get_palm_roi
+from hpf import HPF
+from hpf import HPF_TYPE
+from plantcv import plantcv as pcv
 
 # My Specifications
 print(f"platform.platform() : {platform.platform()}")  # macOS-12.2.1-x86_64-i386-64bit
@@ -15,59 +19,6 @@ print(
 print(f"python version : {platform.python_version()}")  # 3.8.12
 print(f"opencv version : {cv.__version__}")  # 4.5.5
 print(f"numpy version : {np.__version__}")  # 1.22.2
-
-
-def get_roi(img_param, min_grayscale=0):
-    copied = img_param.copy()
-    height, width = copied.shape[:2]
-
-    topmost = 0
-    downmost = height - 1
-    leftmost = 0
-    rightmost = width - 1
-
-    done = False
-
-    for x in range(width):
-        if done is True:
-            break
-        for y in range(height):
-            if copied[y][x] > min_grayscale:
-                leftmost = x
-                done = True
-
-    done = False
-
-    for y in range(height):
-        if done is True:
-            break
-        for x in range(width):
-            if copied[y][x] > min_grayscale:
-                topmost = y
-                done = True
-
-    done = False
-
-    for y in range(height - 1, -1, -1):
-        if done is True:
-            break
-        for x in range(width):
-            if copied[y][x] > min_grayscale:
-                downmost = y
-                done = True
-
-    done = False
-
-    for x in range(width - 1, -1, -1):
-        if done is True:
-            break
-        for y in range(height):
-            if copied[y][x] > min_grayscale:
-                rightmost = x
-                done = True
-
-    return copied[topmost:(downmost + 1), leftmost:(rightmost + 1)], {'topmost': topmost, 'downmost': downmost,
-                                                                      'leftmost': leftmost, 'rightmost': rightmost}
 
 
 # Now it's same with find_one_orientation_lines
@@ -185,8 +136,8 @@ def find_one_orientation_lines(img_param, max_line_distance, is_horizontal):
 
 
 def init_imgs():
-    image_path = "/Users/david/workspace/palm-beesly/sample_img/sample7.4.png"
-    image = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
+    image_path = "/Users/david/workspace/palm-beesly/sample_img/sample7.png"
+    image = cv.imread(image_path)
 
     if image is None:
         print(constants.ERROR_MESSAGE["IMG_IS_EMPTY"])
@@ -197,37 +148,46 @@ def init_imgs():
 def thin(bgr_img):
     gray = cv.cvtColor(bgr_img, cv.COLOR_BGR2GRAY)
     _, thresh = cv.threshold(gray, 1, 255, cv.THRESH_BINARY)
-    result = cv.ximgproc.thinning(thresh)  # to use this function paste it: pip install opencv-contrib-python
+    result = utils.thin(thresh)  # to use this function paste it: pip install opencv-contrib-python
     return result
 
 
 if __name__ == "__main__":
-    grayed = init_imgs()
-    img, vertices = get_roi(grayed)
-    thr = utils.adaptive_threshold(img, 11, 0)
+    original = init_imgs()
+    roi, rect = get_palm_roi(original)
+    x, y, w, h = rect
+    roi_gray = cv.cvtColor(roi, cv.COLOR_BGR2GRAY)
+    hpfed = HPF(HPF_TYPE.SC3X3, alpha=500, gaussian=4).process(roi)
+    thr = utils.adaptive_threshold(hpfed, 11, 0)
 
-    cv.imshow("original", img)
-    cv.imshow("adaptiveThreshold", thr)
+    # contours, _ = cv.findContours(thr, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
+    # mask = np.zeros_like(thr)
+    # for c in contours:
+    #     cv.drawContours(mask, [c], -1, 255, 1)
 
-    max_line_distance = 1.3  # Default value is 3
+    thinned = utils.thin(thr)
+    pruned_skeleton, _, _ = pcv.morphology.prune(skel_img=thinned, size=35)
+    cv.imshow("pruned_skeleton", pruned_skeleton)
+
+    max_line_distance = 2  # Default value is 3
     combining_distance = 1
-    min_line_length = 100  # The minimum number of dots in one line, Default value is 4
+    min_line_length = 5  # The minimum number of dots in one line, Default value is 4
     number_of_lines_to_leave = 6  # Default value is 10
 
-    height, width = thr.shape[:2]
+    height, width = pruned_skeleton.shape[:2]
 
     start = timer()
     # lines = find_one_orientation_lines_with_debugging(thr, max_line_distance, is_horizontal=False)
-    lines = find_one_orientation_lines(thr, max_line_distance, is_horizontal=False)
+    lines = find_one_orientation_lines(pruned_skeleton, max_line_distance, is_horizontal=False)
     lines.imshow("just found", height, width)
     stop = timer()
     print("Finding part", round(stop - start, 6))
 
     start = timer()
-    # lines.filter_by_line_length(min_line_length)
-    lines.sort()
-    del lines.line_list[0]
-    lines.leave_long_lines(number_of_lines_to_leave)
+    lines.filter_by_line_length(min_line_length)
+    # lines.sort()
+    # del lines.line_list[0]
+    # lines.leave_long_lines(number_of_lines_to_leave)
     filtered = lines.visualize_lines(height, width)
     cv.imshow("filtered", filtered)
     stop = timer()
