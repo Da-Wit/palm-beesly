@@ -123,11 +123,11 @@ def crop(img_param, pts_li, black_background):
 
     dst = cv.bitwise_and(croped, croped, mask=mask)
     if black_background:
-        return dst
+        return dst, rect
     bg = np.ones_like(croped, np.uint8) * 255
     cv.bitwise_not(bg, bg, mask=mask)
     dst2 = bg + dst
-    return dst2
+    return dst2, rect
 
 
 def get_palm_roi(img_param):
@@ -169,9 +169,9 @@ def get_palm_roi(img_param):
            thumb_mcp,
            index_left]
     roi = [p.tuple() for p in roi]
-    cropped = crop(img, roi, black_background=True)
+    cropped, rect = crop(img, roi, black_background=True)
 
-    return cropped
+    return cropped, rect
 
 
 if __name__ == "__main__":
