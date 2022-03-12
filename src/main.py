@@ -21,6 +21,47 @@ print(f"opencv version : {cv.__version__}")  # 4.5.5
 print(f"numpy version : {np.__version__}")  # 1.22.2
 
 
+# 한 방향으로의 hline들의 리스트, nline을 리턴함
+def find_one_orientation_lines(img_param, max_line_distance, is_horizontal):
+    height, width = img_param.shape[:2]
+
+    if is_horizontal:
+        first_for_loop_max = width
+        second_for_loop_max = height
+    else:
+        first_for_loop_max = height
+        second_for_loop_max = width
+
+    lines = Lines()
+    unique_num = 0
+    for i in range(first_for_loop_max):
+        if is_horizontal:
+            x = i
+        else:
+            y = i
+        for j in range(second_for_loop_max):
+            if is_horizontal:
+                y = j
+            else:
+                x = j
+
+            if img_param[y][x] == 255:
+                lines.handle_point([x, y], max_line_distance, unique_num, is_horizontal)
+                unique_num += 1
+        if is_horizontal:
+            x = i
+            y = 0
+        else:
+            x = 0
+            y = i
+        # 2중 for문이 돌 때마다 실행한다.
+        # lines에 저장된 모든 선들의 모든 점들에 대해 연산을 수행할 필요는 없다.
+        # 그래서 작업 영역(max_line_distance)를 벗어난 점들을 작업 중에만 제거해준다.
+        lines.renew_work_area([x, y], max_line_distance, is_horizontal)
+
+    return lines
+
+
 # Now it's same with find_one_orientation_lines
 # Please update this function too, when updating function find_one_orientation_lines
 def find_one_orientation_lines_with_debugging(img_param, max_line_distance, is_horizontal):
@@ -97,44 +138,6 @@ def find_one_orientation_lines_with_debugging(img_param, max_line_distance, is_h
     return lines
 
 
-# 한 방향으로의 hline들의 리스트, nline을 리턴함
-def find_one_orientation_lines(img_param, max_line_distance, is_horizontal):
-    height, width = img_param.shape[:2]
-
-    if is_horizontal:
-        first_for_loop_max = width
-        second_for_loop_max = height
-    else:
-        first_for_loop_max = height
-        second_for_loop_max = width
-
-    lines = Lines()
-    unique_num = 0
-    for i in range(first_for_loop_max):
-        if is_horizontal:
-            x = i
-        else:
-            y = i
-        for j in range(second_for_loop_max):
-            if is_horizontal:
-                y = j
-            else:
-                x = j
-
-            if img_param[y][x] == 255:
-                lines.handle_point([x, y], max_line_distance, unique_num, is_horizontal)
-                unique_num += 1
-        if is_horizontal:
-            x = i
-            y = 0
-        else:
-            x = 0
-            y = i
-        lines.renew_work_area([x, y], max_line_distance, is_horizontal)
-
-    return lines
-
-
 def init_imgs():
     image_path = "/Users/david/workspace/palm-beesly/sample_img/sample7.png"
     image = cv.imread(image_path)
@@ -159,11 +162,6 @@ if __name__ == "__main__":
     roi_gray = cv.cvtColor(roi, cv.COLOR_BGR2GRAY)
     hpfed = HPF(HPF_TYPE.SC3X3, alpha=500, gaussian=4).process(roi)
     thr = utils.adaptive_threshold(hpfed, 11, 0)
-
-    # contours, _ = cv.findContours(thr, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
-    # mask = np.zeros_like(thr)
-    # for c in contours:
-    #     cv.drawContours(mask, [c], -1, 255, 1)
 
     thinned = utils.thin(thr)
     pruned_skeleton, _, _ = pcv.morphology.prune(skel_img=thinned, size=35)
@@ -192,13 +190,6 @@ if __name__ == "__main__":
     cv.imshow("filtered", filtered)
     stop = timer()
     print("Filtering part", round(stop - start, 6))
-
-    # start = timeit.default_timer()
-    # thinned = thin(filtered)
-    # cv.imshow("thinned", thinned)
-    # stop = timeit.default_timer()
-    # print("Thinning part", round(stop - start, 6))
-
     print("Done")
 
     cv.waitKey(0)

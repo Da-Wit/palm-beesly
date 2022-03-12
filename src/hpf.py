@@ -1,8 +1,15 @@
+# 이 파일은 이미지의 윤곽을 구하는 HPF(High Pass Filter)를 구현하고 있다.
+# 외부에서는 HPF, HPF_TYPE 이용한다.
+
+
 import cv2 as cv
 import enum
 import numpy as np
 
 # 상수들
+# HPF 커널을 이용해 HPF를 구할 때 HPF를 수직, 수평 방향으로 각각 다른 커널을 적용해야 한다.
+# X, Y는 이 때 커널에서 적절한 방향을 식별하기 위해 사용된다.
+# TODO 상수 constants.py로 옮기기
 X = 'x'
 Y = 'y'
 MAX_ALPHA = 'max_alpha'

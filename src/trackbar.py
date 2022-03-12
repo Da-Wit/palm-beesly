@@ -1,3 +1,6 @@
+# 이 파일은 cv.createTrackbar의 5번째 인자인 onChange에 사용될 함수들만을 저장하는 파일이다.
+# 현재 이 파일은 어디에서도 import되지 않고 있다.
+
 import cv2 as cv
 
 

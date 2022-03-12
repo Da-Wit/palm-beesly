@@ -28,6 +28,7 @@ PINKY_DIP = mp_hands.HandLandmark.PINKY_DIP
 PINKY_TIP = mp_hands.HandLandmark.PINKY_TIP
 
 
+# 좌표를 저장할 때 사용할 클래스
 class Point:
     def __init__(self, x, y):
         self.x = x
